@@ -12,15 +12,15 @@
    ========================================================================== */
 (function () {
   const CATEGORIES = {
-    PROC: { label: 'Process & Manufacturing', color: '#2563eb' },
-    FORM: { label: 'Dosage Form & Formulation Type', color: '#7c3aed' },
-    API: { label: 'Active Pharmaceutical Ingredient', color: '#dc2626' },
-    EXC: { label: 'Excipient & Polymer', color: '#ea580c' },
-    ROLE: { label: 'Functional Role', color: '#ca8a04' },
-    TECH: { label: 'Analytical Technique', color: '#0891b2' },
-    PROP: { label: 'Material Property / CQA', color: '#059669' },
-    PARAM: { label: 'Process Parameter', color: '#4f46e5' },
-    DATA: { label: 'Data Management & Compliance', color: '#475569' }
+    PROC: { label: 'Process & Manufacturing', color: '#E6224F' },
+    FORM: { label: 'Dosage Form & Formulation Type', color: '#B31C3F' },
+    API: { label: 'Active Pharmaceutical Ingredient', color: '#A4A4A4' },
+    EXC: { label: 'Excipient & Polymer', color: '#666CA1' },
+    ROLE: { label: 'Functional Role', color: '#A4A4A4' },
+    TECH: { label: 'Analytical Technique', color: '#717171' },
+    PROP: { label: 'Material Property / CQA', color: '#E6224F' },
+    PARAM: { label: 'Process Parameter', color: '#666CA1' },
+    DATA: { label: 'Data Management & Compliance', color: '#A4A4A4' }
   };
 
   const RAW = `

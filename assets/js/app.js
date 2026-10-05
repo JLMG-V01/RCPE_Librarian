@@ -17,7 +17,7 @@
     flask: '<path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
     key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
     download: '<path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/>', upload: '<path d="M12 15V3m0 0L8 7m4-4 4 4M4 21h16"/>', play: '<path d="M7 4v16l13-8z"/>',
-    moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>', sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', db: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
     cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', project: '<path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
     book: '<path d="M4 4h6a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h7z"/>', check: '<path d="m5 12 5 5L20 7"/>', x: '<path d="M6 6l12 12M18 6 6 18"/>',
@@ -37,7 +37,7 @@
   const tv = (t) => TV[t] || [String(t || 'DAT').slice(0, 3).toUpperCase(), '#64748b'];
 
   // ---------- persistent state ----------
-  const LS = 'fairlib.state.v1';
+  const LS = 'fairlib.state.v2';
   const loadState = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
   let ST = loadState() || {};
   ST.role = ST.role || 'scientist';
@@ -74,6 +74,19 @@
     if (e) list.push({ id: 'R-0995', ds: e.id, requester: 'p01', purpose: 'Reuse for new study', reason: 'Raman PLS model transfer to pharma FDM system.', duration: '180', created: '2026-07-02', status: 'granted', expires: '2026-12-29', history: [H('2026-07-02', 'p01', 'Request submitted'), H('2026-07-04', 'p03', 'Legal clearance confirmed', 'Internal use only per CDA-2024-014 §4.2'), H('2026-07-07', 'p02', 'Approved by data owner', 'Granted for 180 days.')] });
     if (f) list.push({ id: 'R-1003', ds: f.id, requester: 'p04', purpose: 'Joint publication', reason: 'Joint paper with consortium WP3 on swallowability.', duration: '90', created: '2026-10-01', status: 'legal', history: [H('2026-10-01', 'p04', 'Request submitted'), H('2026-10-01', 'system', 'Routed to Legal & Contracts (dataset under legal review)')] });
     if (g) list.push({ id: 'R-1004', ds: g.id, requester: 'p09', purpose: 'Reuse for new study', reason: 'Reference XRPD patterns for DPE amorphization study.', duration: '90', created: '2026-10-02', status: 'owner', history: [H('2026-10-02', 'p09', 'Request submitted'), H('2026-10-02', 'system', 'Legal check passed automatically (dataset cleared)')] });
+
+    const used = new Set(list.map((r) => r.ds));
+    const pick2 = (fn) => D.DATASETS.find((d) => !used.has(d.id) && fn(d));
+    const hx = pick2((d) => d.project === 'STABIASD' && d.owner === 'p02' && d.legal === 'Cleared' && d.technique === 'DSC');
+    const ix = pick2((d) => d.project === 'ASD3D' && d.owner === 'p02' && d.legal === 'Cleared' && d.technique === 'DSC');
+    const jx = pick2((d) => d.project === 'GELPRINT' && d.owner === 'p01' && d.legal === 'Cleared' && d.technique === 'HPLC');
+    const kx = pick2((d) => d.project === 'GELPRINT' && d.owner === 'p01' && d.technique === 'RHEO');
+    const lx = pick2((d) => d.project === 'PRINTPED' && d.owner === 'p02' && d.legal === 'Cleared' && d.technique === 'DSC');
+    if (hx) list.push({ id: 'R-0980', ds: hx.id, requester: 'p01', purpose: 'Comparison / benchmark', reason: 'Tg reference values of aged ASDs for PrintPed stability protocol.', duration: '90', created: '2026-04-08', status: 'granted', expires: '2026-07-08', history: [H('2026-04-08', 'p01', 'Request submitted'), H('2026-04-08', 'system', 'Legal check passed automatically (dataset cleared)'), H('2026-04-10', 'p02', 'Approved by data owner', 'Approved for 90 days – please cite the StabiASD ELN entry.')] });
+    if (ix) list.push({ id: 'R-0985', ds: ix.id, requester: 'g01', purpose: 'Joint publication', reason: 'Comparison with university ASD screening data.', duration: '30', created: '2026-06-15', status: 'rejected', history: [H('2026-06-15', 'g01', 'Request submitted'), H('2026-06-15', 'system', 'Legal check passed automatically (dataset cleared)'), H('2026-06-17', 'p02', 'Rejected by data owner', 'External sharing requires a signed CDA between RCPE and your institute – please contact Legal & Contracts.')] });
+    if (jx) list.push({ id: 'R-0990', ds: jx.id, requester: 'p09', purpose: 'Reuse for new study', reason: 'Assay method transfer for DPE gummies.', duration: '90', created: '2026-08-20', status: 'rejected', history: [H('2026-08-20', 'p09', 'Request submitted'), H('2026-08-20', 'system', 'Legal check passed automatically (dataset cleared)'), H('2026-08-22', 'p01', 'Rejected by data owner', 'Formulations are still being optimised – please re-request once the v2 data are released (planned Nov 2026).')] });
+    if (kx) list.push({ id: 'R-0992', ds: kx.id, requester: 'p04', purpose: 'Comparison / benchmark', reason: 'Benchmark of gel rheology against HME melt rheology.', duration: '180', created: '2026-09-02', status: 'granted', expires: '2027-03-01', history: [H('2026-09-02', 'p04', 'Request submitted'), H(kx.legal === 'Cleared' || kx.legal === 'Not required' ? '2026-09-02' : '2026-09-03', kx.legal === 'Cleared' || kx.legal === 'Not required' ? 'system' : 'p03', kx.legal === 'Cleared' || kx.legal === 'Not required' ? 'Legal check passed automatically (dataset cleared)' : 'Legal clearance confirmed', kx.legal === 'Cleared' || kx.legal === 'Not required' ? '' : 'Internal reuse permitted.'), H('2026-09-04', 'p01', 'Approved by data owner', 'Approved – please share your rheology comparison with the GelPrint team.')] });
+    if (lx) list.push({ id: 'R-0994', ds: lx.id, requester: 'g01', purpose: 'Teaching / training', reason: 'Example thermogram for a guest lecture on pediatric formulations.', duration: '30', created: '2026-09-10', status: 'granted', expires: '2026-10-10', history: [H('2026-09-10', 'g01', 'Request submitted'), H('2026-09-10', 'system', 'Legal check passed automatically (dataset cleared)'), H('2026-09-11', 'p02', 'Approved by data owner', 'Approved for 30 days for teaching purposes only.')] });
     return list;
   }
 
@@ -116,12 +129,12 @@
   const clsPill = (c) => `<span class="pill ${c.startsWith('Confidential') ? 'bad' : c === 'Open (internal)' ? 'info' : ''}" title="Data classification">${ic(c.startsWith('Confidential') ? 'shield' : 'layers')}${esc(c)}</span>`;
   const accessPill = (d) => hasAccess(d) ? `<span class="pill ok">${ic('unlock')}Access</span>` : `<span class="pill warn">${ic('lock')}Restricted</span>`;
   const personLink = (id) => { const p = person(id); return `<a href="#/search?q=${enc('person:' + p.surname)}" title="${esc(p.title || '')}">${esc(p.name)}</a>`; };
-  const avatar = (id, sm) => { const p = person(id); return `<span class="avatar ${sm ? 'sm' : ''}" style="background:${p.color}" title="${esc(p.name)}">${esc(p.initials)}</span>`; };
+  const avatar = (id, sm) => { const p = person(id); return `<span class="avatar ${sm ? 'sm' : ''}" title="${esc(p.name)}">${esc(p.initials)}</span>`; };
   const eqLink = (id) => D.EQ_BY[id] ? `<a href="#/equipment/${id}">${esc(D.EQ_BY[id].name)}</a>` : esc(id);
   const prjLink = (id) => D.PRJ_BY[id] ? `<a href="#/project/${id}">${esc(D.PRJ_BY[id].name)}</a>` : esc(id);
   const tagBtn = (t) => `<button class="tag" data-q="tag:&quot;${esc(t)}&quot;">${esc(t)}</button>`;
   const dsTitle = (d) => seeDetails(d) ? d.title : `${d.techName} – ${d.formulation} (confidential composition)`;
-  const ticon = (t) => { const [a, c] = tv(t); return `<div class="ticon" style="background:${c}">${a}</div>`; };
+  const ticon = (t) => `<div class="ticon" title="${esc(t)}">${tv(t)[0]}</div>`;
 
   // ---------- routing ----------
   function parseHash() { const h = location.hash.slice(1) || '/'; const [path, qs] = h.split('?'); const params = new URLSearchParams(qs || ''); return { parts: path.split('/').filter(Boolean), params }; }
@@ -161,6 +174,7 @@
     $('#role-menu').innerHTML = `<div class="rm-head">Switch role (demo personas)</div>` + Object.entries(D.ROLES).map(([k, r]) => { const p = person(r.user); return `<button class="role-opt ${k === ST.role ? 'current' : ''}" data-role="${k}">${avatar(p.id)}<span><b>${r.label}</b> · <span class="muted small">${esc(p.name)}</span><p>${esc(r.desc)}</p></span></button>`; }).join('');
     const n = actionable().length;
     const b = $('#req-badge'); b.hidden = !n; b.textContent = n;
+    const dark = document.documentElement.dataset.theme !== 'light'; $('#btn-theme').innerHTML = ic(dark ? 'sun' : 'moon'); $('#btn-theme').title = dark ? 'Switch to light mode' : 'Switch to dark mode';
     const idx = $('#mainnav a[data-nav="index"]'); idx.innerHTML = ST.role === 'admin' ? 'Index & Admin' : 'Index';
   }
   function setRole(role, quiet) { ST.role = role; save(); $('#role-menu').classList.remove('open'); render(); if (!quiet) toast(`Now viewing as <b>${D.ROLES[role].label}</b> – ${esc(person(D.ROLES[role].user).name)}`, D.ROLES[role].icon === 'flask' ? 'flask' : D.ROLES[role].icon); }
@@ -255,24 +269,23 @@
   function pageHome() {
     const nVisible = D.DATASETS.filter(visibleToGuest).length;
     const recent = D.DATASETS.filter(visibleToGuest).slice().sort((a, b) => b.modified.localeCompare(a.modified)).slice(0, 6);
-    const examples = ['itraconazole DSC', 'brittle filament', 'Prusa', 'acetaminophen dissolution', 'owner:Beispiel after:2026-01-01', 'Raman map polypill', 'Schmelzpunkt Theophyllin', 'legal:Cleared PEO'];
     const browse = [
       ['FDM printing', 'process:FDM', 'printer', '#d97706'], ['Hot-melt extrusion', 'process:HME', 'thermo', '#2563eb'], ['Semi-solid extrusion', 'process:SSE', 'drop', '#ea580c'],
       ['Direct powder extrusion', 'process:DPE', 'box', '#c2410c'], ['Laser sintering', 'process:SLS', 'sparkle', '#b45309'], ['Solo API references', 'mix:"Solo API"', 'beaker', '#dc2626'],
       ['API + excipient', 'mix:"API + excipient"', 'layers', '#7c3aed'], ['Ternary systems', 'mix:"API + polymer + additive"', 'layers', '#6d28d9'], ['Polypills (multi-API)', 'mix:"Multi-API"', 'graph', '#0f766e'], ['Stability studies', 'tag:"stability study"', 'clock', '#92400e']
     ];
     return `<section class="hero" id="hero">
+      <span class="eyebrow">RCPE Research Data Index</span>
       <h1>The <em>FAIR</em> Librarian</h1>
-      <p class="lead">One search across every project share, instrument NAS and collaboration site of the RCPE server landscape – findable, accessible, interoperable and reusable research data for pharmaceutical materials science.</p>
+      <p class="lead">One search across every project share, instrument storage and collaboration site – findable, accessible, interoperable and reusable research data for pharmaceutical materials science.</p>
       ${searchBox(false)}
-      <div class="hero-chips" id="hero-chips">${examples.map((e) => `<button data-q="${esc(e)}">${esc(e)}</button>`).join('')}</div>
-      <div class="hero-links">Not sure what to type? <a href="#/ask">${ic('chat')} Ask the Librarian a question</a> · <a href="#/ontology">${ic('book')} Browse the ontology</a></div>
+      <div class="hero-links">Not sure what to type? <a href="#/ask">${ic('chat')} Ask the Librarian</a> · <a href="#/ontology">${ic('book')} Browse the ontology</a></div>
     </section>
     <div class="stats" id="stats">
       ${[[nVisible.toLocaleString('en'), 'Indexed datasets', 'db'], [D.EQUIPMENT.length, 'Equipment items', 'cpu'], [D.PROJECTS.length, 'Projects', 'project'], [D.SOURCES.length, 'Server sources / domains', 'server'], [O.concepts.length, 'Ontology concepts', 'book'], [O.concepts.reduce((s, c) => s + c.alt.length, 0), 'Synonyms & translations', 'chat']].map(([v, l, i]) => `<div class="card stat"><div class="v">${v}</div><div class="l">${ic(i)} ${l}</div></div>`).join('')}
     </div>
     <div class="section-title"><h2>Browse the landscape</h2><span class="muted small">Focus: pharmaceutical 3D printing & materials science</span></div>
-    <div class="browse">${browse.map(([l, q, i, c]) => { const n = X.search(q, { user: user(), grants: grants() }).results.length; return `<a href="${searchHash(q, {})}"><span class="bi" style="background:${c}">${ic(i)}</span><b>${l}</b><small>${n} datasets</small></a>`; }).join('')}</div>
+    <div class="browse">${browse.map(([l, q, i, c]) => { const n = X.search(q, { user: user(), grants: grants() }).results.length; return `<a href="${searchHash(q, {})}"><span class="bi">${ic(i)}</span><b>${l}</b><small>${n} datasets</small></a>`; }).join('')}</div>
     <div class="section-title"><h2>Recently changed</h2><span class="spacer"></span><a href="${searchHash('', { 'modified-after': ['2026-09-01'] })}" class="small">Show all changed since Sept 2026 ${ic('arrow')}</a></div>
     <div>${recent.map((d) => resultCard({ d, access: hasAccess(d), details: seeDetails(d) })).join('')}</div>`;
   }
@@ -370,7 +383,7 @@
   }
   function pageEquipmentList() {
     const cats = [...new Set(D.EQUIPMENT.map((e) => e.category))];
-    return `<div class="row"><h1 style="font-size:1.8rem">Equipment</h1><span class="muted">${D.EQUIPMENT.length} indexed instruments – every dataset is linked to the equipment that produced it</span><span class="spacer"></span><input class="input" style="max-width:280px" id="eq-filter" placeholder="Filter equipment…"></div>
+    return `<div class="page-head"><h1>Equipment</h1><span class="muted">${D.EQUIPMENT.length} indexed instruments – every dataset is linked to the equipment that produced it</span><span class="spacer"></span><input class="input" style="max-width:280px" id="eq-filter" placeholder="Filter equipment…"></div>
       ${cats.map((c) => `<div class="section-title eq-cat"><h2>${esc(c)}</h2></div><div class="grid g3 eq-grid">${D.EQUIPMENT.filter((e) => e.category === c).map((e) => `<div class="eq-wrap" data-txt="${esc(X.norm(e.name + ' ' + e.model + ' ' + e.id))}">${eqCard(e)}</div>`).join('')}</div>`).join('')}`;
   }
   function pageEquipment(id) {
@@ -394,13 +407,13 @@
   // ---------- projects ----------
   function projectCard(p) {
     const n = D.DATASETS.filter((d) => d.project === p.id && visibleToGuest(d)).length;
-    return `<div class="card ecard"><div class="row"><span class="eq-ic" style="background:var(--ok-bg);color:var(--ok)">${ic('project')}</span><div style="flex:1;min-width:0"><h3><a href="#/project/${p.id}">${esc(p.name)}</a></h3><div class="xs muted">${esc(p.funding)}</div></div><span class="pill ${p.status === 'Active' ? 'ok' : ''}">${esc(p.status)}</span></div>
+    return `<div class="card ecard"><div class="row"><span class="eq-ic">${ic('project')}</span><div style="flex:1;min-width:0"><h3><a href="#/project/${p.id}">${esc(p.name)}</a></h3><div class="xs muted">${esc(p.funding)}</div></div><span class="pill ${p.status === 'Active' ? 'ok' : ''}">${esc(p.status)}</span></div>
       <div class="small">${esc(p.title)}</div><div class="row">${clsPill(p.cls)}<span class="pill">${n} datasets</span></div>
       <div class="row small muted"><span>PI ${personLink(p.pi)}</span><span>· Data owner ${personLink(p.owner)}</span></div></div>`;
   }
   function pageProjectList() {
     const vis = D.PROJECTS.filter((p) => !(ST.role === 'guest' && p.cls.startsWith('Confidential')));
-    return `<div class="row"><h1 style="font-size:1.8rem">Projects</h1><span class="muted">${vis.length} projects in the index</span></div><div class="grid g3" style="margin-top:16px">${vis.map(projectCard).join('')}</div>`;
+    return `<div class="page-head"><h1>Projects</h1><span class="muted">${vis.length} projects in the index</span></div><div class="grid g3" style="margin-top:16px">${vis.map(projectCard).join('')}</div>`;
   }
   function pageProject(id) {
     const p = D.PRJ_BY[id]; if (!p) return `<div class="empty card">Project not found.</div>`;
@@ -411,7 +424,7 @@
     const member = p.members.includes(user().id) || ST.role === 'admin';
     return `<div class="crumbs"><a href="#/projects">Projects</a> › ${esc(p.name)}</div>
       <div class="card ds-head"><div><div class="row">${clsPill(p.cls)}<span class="pill ${p.status === 'Active' ? 'ok' : ''}">${esc(p.status)}</span>${member ? `<span class="pill ok">${ic('check')}You are a member</span>` : ''}</div>
-        <h1>${esc(p.name)} <span class="muted" style="font-size:1rem;font-family:var(--font)">${esc(p.id)}</span></h1><p style="margin:4px 0 12px;font-size:1.05rem">${esc(p.title)}</p><p class="muted">${esc(p.desc)}</p>
+        <h1>${esc(p.name)} <span class="muted" style="font-size:1rem">${esc(p.id)}</span></h1><p style="margin:4px 0 12px;font-size:1.05rem">${esc(p.title)}</p><p class="muted">${esc(p.desc)}</p>
         <dl class="kv" style="max-width:720px"><dt>Funding</dt><dd>${esc(p.funding)}</dd><dt>Partner</dt><dd>${esc(p.partner)}</dd><dt>Runtime</dt><dd>${fmtDate(p.start)} – ${fmtDate(p.end)}</dd><dt>Agreement</dt><dd>${esc(p.agreement || '–')}</dd><dt>Processes</dt><dd>${p.proc.map((x) => `<a href="${searchHash('process:' + x + ' project:' + p.id, {})}">${x === 'SOLO' ? 'Raw-material characterization' : x}</a>`).join(', ')}</dd><dt>Data owner</dt><dd>${personLink(p.owner)}</dd></dl></div>
         <div class="ds-actions"><a class="btn btn-primary" href="${searchHash('project:' + p.id, {})}">${ic('search')} Search ${ds.length} datasets</a><button class="btn" id="exp-project" data-id="${p.id}">${ic('download')} Export metadata</button></div></div>
       <div class="grid g2" style="margin-top:16px">
@@ -430,15 +443,15 @@
     const nodes = [], links = [];
     const add = (x, y, label, sub, href, color) => { nodes.push({ x, y, label, sub, href, color }); links.push([cx, cy, x, y]); };
     const p = D.PRJ_BY[d.project];
-    add(110, cy, p.name, 'Project', `#/project/${p.id}`, '#15803d');
-    d.equipment.forEach((e, i) => add(cx - 60 + (i - (d.equipment.length - 1) / 2) * 190, 42, D.EQ_BY[e].name, 'Equipment', `#/equipment/${e}`, '#1d4ed8'));
-    add(cx - 170, H - 40, person(d.owner).name, 'Owner', `#/search?q=${enc('person:' + person(d.owner).surname)}`, '#7c3aed');
-    if (d.creator !== d.owner) add(cx + 15, H - 40, person(d.creator).name, 'Creator', `#/search?q=${enc('person:' + person(d.creator).surname)}`, '#a855f7');
+    add(110, cy, p.name, 'Project', `#/project/${p.id}`, 'var(--ink)');
+    d.equipment.forEach((e, i) => add(cx - 60 + (i - (d.equipment.length - 1) / 2) * 190, 42, D.EQ_BY[e].name, 'Equipment', `#/equipment/${e}`, '#666CA1'));
+    add(cx - 170, H - 40, person(d.owner).name, 'Owner', `#/search?q=${enc('person:' + person(d.owner).surname)}`, 'var(--muted)');
+    if (d.creator !== d.owner) add(cx + 15, H - 40, person(d.creator).name, 'Creator', `#/search?q=${enc('person:' + person(d.creator).surname)}`, 'var(--muted)');
     const rel = (d.related || []).map(dsById).filter(Boolean).filter(visibleToGuest).slice(0, 6);
-    rel.forEach((r, i) => add(W - 95, 30 + i * ((H - 60) / Math.max(1, rel.length - 1 || 1)) + (rel.length === 1 ? (H - 60) / 2 : 0), r.technique, r.techName, `#/dataset/${r.id}`, tv(r.technique)[1]));
-    const box = (n, w = 150) => `<a href="${n.href}" class="node"><g><rect x="${n.x - w / 2}" y="${n.y - 19}" width="${w}" height="38" rx="9" style="fill:var(--surface)"/><rect x="${n.x - w / 2}" y="${n.y - 19}" width="${w}" height="38" rx="9" fill="${n.color}22" stroke="${n.color}"/><text x="${n.x}" y="${n.y - 3}" text-anchor="middle" font-weight="600">${esc(n.label.length > 22 ? n.label.slice(0, 21) + '…' : n.label)}</text><text x="${n.x}" y="${n.y + 11}" text-anchor="middle" fill="var(--muted)" style="fill:var(--muted);font-size:9.5px">${esc(n.sub.length > 26 ? n.sub.slice(0, 25) + '…' : n.sub)}</text></g></a>`;
+    rel.forEach((r, i) => add(W - 95, 30 + i * ((H - 60) / Math.max(1, rel.length - 1 || 1)) + (rel.length === 1 ? (H - 60) / 2 : 0), r.technique, r.techName, `#/dataset/${r.id}`, 'var(--faint)'));
+    const box = (n, w = 150) => `<a href="${n.href}" class="node"><g><rect x="${n.x - w / 2}" y="${n.y - 19}" width="${w}" height="38" rx="9" style="fill:var(--surface-2);stroke:${n.color}" stroke-width="1.4"/><text x="${n.x}" y="${n.y - 3}" text-anchor="middle" font-weight="600">${esc(n.label.length > 22 ? n.label.slice(0, 21) + '…' : n.label)}</text><text x="${n.x}" y="${n.y + 11}" text-anchor="middle" fill="var(--muted)" style="fill:var(--muted);font-size:9.5px">${esc(n.sub.length > 26 ? n.sub.slice(0, 25) + '…' : n.sub)}</text></g></a>`;
     return `<svg class="graph" viewBox="0 0 ${W} ${H}" role="img" aria-label="Relationship graph">${links.map(([a, b, c, e]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${e}"/>`).join('')}${nodes.map((n) => box(n)).join('')}
-      <g><rect x="${cx - 95}" y="${cy - 24}" width="190" height="48" rx="12" fill="${tv(d.technique)[1]}" /><text x="${cx}" y="${cy - 4}" text-anchor="middle" style="fill:#fff;font-weight:700">${esc(d.technique)}</text><text x="${cx}" y="${cy + 12}" text-anchor="middle" style="fill:#fff;font-size:10px">${esc(d.formulation)}</text></g></svg>`;
+      <g><rect x="${cx - 95}" y="${cy - 24}" width="190" height="48" rx="12" fill="#E6224F" /><text x="${cx}" y="${cy - 4}" text-anchor="middle" style="fill:#fff;font-weight:700">${esc(d.technique)}</text><text x="${cx}" y="${cy + 12}" text-anchor="middle" style="fill:#fff;font-size:10px">${esc(d.formulation)}</text></g></svg>`;
   }
   function myRequestFor(d) { const u = user(); return (ST.requests || []).filter((r) => r.ds === d.id && r.requester === u.id).sort((a, b) => b.id.localeCompare(a.id))[0]; }
   function pageDataset(id) {
@@ -521,6 +534,7 @@
   const actionable = () => (ST.requests || []).filter(canAct);
   function decide(reqId, approve, comment) {
     const r = ST.requests.find((x) => x.id === reqId); if (!r || !canAct(r)) return;
+    if (!approve && !comment) { toast('Please enter a reason – rejections are documented for the requester', 'info'); const c = $('#cm-' + reqId); if (c) c.focus(); return; }
     const u = user();
     if (r.status === 'legal') {
       r.history.push({ t: TODAY, who: u.id, action: approve ? 'Legal clearance confirmed' : 'Legal check rejected', comment });
@@ -531,8 +545,11 @@
       if (approve && r.duration) r.expires = new Date(Date.parse(TODAY) + (+r.duration) * 86400000).toISOString().slice(0, 10);
     }
     save(); render();
-    toast(`${r.id}: ${approve ? (r.status === 'granted' ? 'access granted' : 'forwarded to data owner') : 'rejected'}`, approve ? 'check' : 'x');
+    toast(`${r.id}: ${approve ? (r.status === 'granted' ? 'access granted' : 'forwarded to data owner') : 'rejected – reason sent to requester'}`, approve ? 'check' : 'x');
   }
+  const isExpired = (r) => r.status === 'granted' && r.expires && r.expires < TODAY;
+  const reqKey = (r) => r.status === 'rejected' ? 'rejected' : isExpired(r) ? 'expired' : r.status === 'granted' ? 'approved' : 'open';
+  const lastDecision = (r) => [...r.history].reverse().find((h) => h.who !== 'system' && /Approved|Rejected|rejected/.test(h.action));
   function requestCard(r, compact) {
     const d = dsById(r.ds); if (!d) return '';
     const steps = [['Submitted', 'submitted'], ['Legal check', 'legal'], ['Owner approval', 'owner'], ['Access granted', 'granted']];
@@ -540,23 +557,61 @@
     let rejAt = -1; if (r.status === 'rejected') { rejAt = r.history.some((h) => /Legal check rejected/.test(h.action)) ? 1 : 2; }
     const cur = r.status === 'rejected' ? rejAt : order[r.status];
     const stepper = steps.map(([l], i) => { const cls = r.status === 'rejected' ? (i < rejAt ? 'done' : i === rejAt ? 'rej' : '') : (i < cur ? 'done' : i === cur ? 'cur' : ''); return `${i ? `<span class="step-line ${i <= (r.status === 'rejected' ? rejAt - 1 : cur - 1) || (r.status === 'granted') ? 'done' : ''}"></span>` : ''}<span class="step ${r.status === 'granted' ? 'done' : cls}"><span class="sd">${(r.status === 'granted' || cls === 'done') ? '✓' : cls === 'rej' ? '✕' : i + 1}</span>${l}</span>`; }).join('');
-    const statusPill = { legal: '<span class="pill warn">Legal check</span>', owner: '<span class="pill info">Owner approval</span>', granted: '<span class="pill ok">Granted</span>', rejected: '<span class="pill bad">Rejected</span>' }[r.status];
-    const act = canAct(r) ? `<div class="row" style="margin-top:12px"><input class="input" style="flex:1;min-width:200px" placeholder="Comment (optional)" id="cm-${r.id}"><button class="btn btn-ok btn-sm" data-decide="${r.id}" data-ok="1">${ic('check')} ${r.status === 'legal' ? 'Confirm legal clearance' : 'Approve access'}</button><button class="btn btn-danger btn-sm" data-decide="${r.id}" data-ok="0">${ic('x')} Reject</button></div>` : '';
-    return `<div class="card req" data-req-card="${r.id}"><div class="row"><b class="mono">${r.id}</b>${statusPill}<span class="spacer"></span><span class="xs muted">${fmtDate(r.created)}${r.expires && r.status === 'granted' ? ' · valid until ' + fmtDate(r.expires) : ''}</span></div>
+    const k = reqKey(r);
+    const statusPill = { open: r.status === 'legal' ? '<span class="pill warn">Legal check</span>' : '<span class="pill info">Owner approval</span>', approved: '<span class="pill ok">Approved</span>', expired: '<span class="pill">Expired</span>', rejected: '<span class="pill bad">Rejected</span>' }[k];
+    const dec = lastDecision(r);
+    let outcome = '';
+    if (dec && k !== 'open') {
+      const by = `<b>${esc(person(dec.who).name)}</b> (${/Legal/.test(dec.action) ? 'Legal & Contracts' : 'data owner'}) on ${fmtDate(dec.t)}`;
+      if (k === 'rejected') outcome = `<div class="outcome bad">${ic('x')}<div>Rejected by ${by}.<br><b>Reason:</b> ${esc(dec.comment || 'No reason recorded')}</div></div>`;
+      else outcome = `<div class="outcome ${k === 'expired' ? 'exp' : 'ok'}">${ic(k === 'expired' ? 'clock' : 'check')}<div>Approved by ${by}${r.expires ? ` · access ${k === 'expired' ? 'expired' : 'valid until'} ${fmtDate(r.expires)}` : ' · unlimited access'}.${dec.comment ? `<br><b>Comment:</b> ${esc(dec.comment)}` : ''}${k === 'expired' ? ' <a href="#" data-req="' + d.id + '">Request again</a>' : ''}</div></div>`;
+    }
+    const act = canAct(r) ? `<div class="row" style="margin-top:12px"><input class="input" style="flex:1;min-width:200px" placeholder="Comment (required when rejecting)" id="cm-${r.id}"><button class="btn btn-ok btn-sm" data-decide="${r.id}" data-ok="1">${ic('check')} ${r.status === 'legal' ? 'Confirm legal clearance' : 'Approve access'}</button><button class="btn btn-danger btn-sm" data-decide="${r.id}" data-ok="0">${ic('x')} Reject</button></div>` : '';
+    return `<div class="card req" data-req-card="${r.id}"><div class="row"><b class="mono">${r.id}</b>${statusPill}<span class="spacer"></span><span class="xs muted">Submitted ${fmtDate(r.created)}</span></div>
       ${compact ? '' : `<div style="margin-top:6px"><a href="#/dataset/${d.id}"><b>${esc(dsTitle(d))}</b></a> <span class="mono xs muted">${esc(d.name)}</span></div><div class="row small muted" style="margin-top:4px"><span>Requester ${personLink(r.requester)}</span><span>· Owner ${personLink(d.owner)}</span><span>· ${legalPill(d.legal)}</span></div>`}
       <div class="stepper">${stepper}</div>
       <div class="small"><b>${esc(r.purpose)}</b> – ${esc(r.reason)} <span class="muted">(${r.duration ? r.duration + ' days' : 'unlimited'})</span></div>
-      <ul class="hist">${r.history.map((h) => `<li>${fmtDate(h.t)} · <b>${h.who === 'system' ? 'System' : esc(person(h.who).name)}</b>: ${esc(h.action)}${h.comment ? ` – <i>${esc(h.comment)}</i>` : ''}</li>`).join('')}</ul>${act}</div>`;
+      ${outcome}
+      <details style="margin-top:8px"><summary class="xs muted" style="cursor:pointer">Full history (${r.history.length} events)</summary><ul class="hist">${r.history.map((h) => `<li>${fmtDate(h.t)} · <b>${h.who === 'system' ? 'System' : esc(person(h.who).name)}</b>: ${esc(h.action)}${h.comment ? ` – <i>${esc(h.comment)}</i>` : ''}</li>`).join('')}</ul></details>${act}</div>`;
+  }
+  function userHistory(uid) {
+    const rows = [];
+    (ST.requests || []).forEach((r) => {
+      const d = dsById(r.ds); if (!d) return;
+      r.history.forEach((h) => {
+        const asReq = r.requester === uid, asActor = h.who === uid;
+        if (!asReq && !asActor) return;
+        rows.push({ date: h.t, request: r.id, ds: d, as: asActor && !asReq ? (/Legal/.test(h.action) ? 'Legal reviewer' : 'Data owner') : 'Requester', actor: h.who === 'system' ? 'System' : person(h.who).name, event: h.action, comment: h.comment || '', status: reqKey(r) });
+      });
+    });
+    return rows.sort((a, b) => b.date.localeCompare(a.date) || b.request.localeCompare(a.request));
   }
   function pageRequests() {
-    const u = user(); const all = (ST.requests || []).slice().sort((a, b) => b.id.localeCompare(a.id));
+    const u = user(); const all = (ST.requests || []).slice().sort((a, b) => b.created.localeCompare(a.created) || b.id.localeCompare(a.id));
     const inbox = all.filter(canAct); const mine = all.filter((r) => r.requester === u.id);
     const isApprover = u.role === 'admin' || u.role === 'owner' || D.DATASETS.some((d) => d.owner === u.id);
     if (!UI.reqTab || (UI.reqTab === 'inbox' && !isApprover) || (UI.reqTab === 'all' && u.role !== 'admin')) UI.reqTab = isApprover && inbox.length ? 'inbox' : 'mine';
-    const list = UI.reqTab === 'inbox' ? inbox : UI.reqTab === 'mine' ? mine : all;
-    return `<div class="row"><h1 style="font-size:1.8rem">Access requests</h1><span class="muted">Request → legal check (for NDA/CDA or uncleared data) → data-owner approval → access</span><span class="spacer"></span>${u.role === 'admin' ? `<button class="btn btn-sm" id="exp-audit">${ic('download')} Export audit trail (CSV)</button>` : ''}</div>
-      <div class="tabs" id="req-tabs" style="margin-top:14px">${isApprover ? `<button data-reqtab="inbox" class="${UI.reqTab === 'inbox' ? 'active' : ''}">${ic('shield')} Approvals inbox <span class="pill ${inbox.length ? 'gold' : ''}">${inbox.length}</span></button>` : ''}<button data-reqtab="mine" class="${UI.reqTab === 'mine' ? 'active' : ''}">${ic('send')} My requests <span class="pill">${mine.length}</span></button>${u.role === 'admin' ? `<button data-reqtab="all" class="${UI.reqTab === 'all' ? 'active' : ''}">${ic('list')} All requests <span class="pill">${all.length}</span></button>` : ''}</div>
-      <div id="req-list">${list.map((r) => requestCard(r)).join('') || `<div class="empty card">${UI.reqTab === 'inbox' ? 'Nothing to approve – inbox zero.' : 'No requests yet. Open a restricted dataset and click “Request access”.'}</div>`}</div>`;
+    const LBL = { all: 'All', open: 'Open', approved: 'Approved', rejected: 'Rejected', expired: 'Expired' };
+    const fchips = (list) => `<div class="filters-inline" id="req-filter">${Object.keys(LBL).map((k) => `<button data-reqfilter="${k}" class="${(UI.reqFilter || 'all') === k ? 'on' : ''}">${LBL[k]} · ${k === 'all' ? list.length : list.filter((r) => reqKey(r) === k).length}</button>`).join('')}</div>`;
+    const filt = (list) => list.filter((r) => !UI.reqFilter || UI.reqFilter === 'all' || reqKey(r) === UI.reqFilter);
+    const empty = (msg) => `<div class="empty card">${msg}</div>`;
+    let body = '';
+    if (UI.reqTab === 'inbox') body = inbox.map((r) => requestCard(r)).join('') || empty('Nothing to approve – inbox zero.');
+    else if (UI.reqTab === 'mine') body = fchips(mine) + (filt(mine).map((r) => requestCard(r)).join('') || empty('No requests in this category. Open a restricted dataset and click “Request access”.'));
+    else if (UI.reqTab === 'all') body = fchips(all) + (filt(all).map((r) => requestCard(r)).join('') || empty('No requests in this category.'));
+    else {
+      const uid = u.role === 'admin' ? (UI.histUser || u.id) : u.id;
+      const rows = userHistory(uid);
+      const reqs = all.filter((r) => r.requester === uid);
+      const decisions = rows.filter((x) => x.as !== 'Requester').length;
+      const stat = (v, l) => `<div class="card stat"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+      body = `<div class="row" style="margin-bottom:14px">${u.role === 'admin' ? `<label class="fl" style="margin:0">User</label><select class="input" id="hist-user" style="max-width:320px">${D.PEOPLE.map((p) => `<option value="${p.id}" ${p.id === uid ? 'selected' : ''}>${esc(p.name)} – ${esc(p.title)}</option>`).join('')}</select>` : `<span class="muted small">Your complete access history – requests you made and decisions you took.</span>`}<span class="spacer"></span><button class="btn btn-sm" id="exp-hist" data-uid="${uid}">${ic('download')} Export history (CSV)</button></div>
+        <div class="hstats">${stat(reqs.length, 'Requests made')}${stat(reqs.filter((r) => reqKey(r) === 'approved').length, 'Approved & active')}${stat(reqs.filter((r) => reqKey(r) === 'rejected').length, 'Rejected')}${stat(reqs.filter((r) => reqKey(r) === 'open').length, 'Open')}${stat(decisions, 'Decisions taken as approver')}</div>
+        ${rows.length ? `<div class="card" style="overflow:auto"><table class="tbl"><thead><tr><th>Date</th><th>Request</th><th>Dataset</th><th>Role</th><th>Event</th><th>By</th><th>Comment / reason</th><th>Outcome</th></tr></thead><tbody>${rows.map((x) => `<tr><td style="white-space:nowrap">${fmtDate(x.date)}</td><td class="mono">${x.request}</td><td><a href="#/dataset/${x.ds.id}">${esc(x.ds.name)}</a></td><td>${x.as}</td><td>${esc(x.event)}</td><td>${esc(x.actor)}</td><td class="small">${esc(x.comment) || '<span class="faint">–</span>'}</td><td>${{ open: '<span class="pill info">Open</span>', approved: '<span class="pill ok">Approved</span>', rejected: '<span class="pill bad">Rejected</span>', expired: '<span class="pill">Expired</span>' }[x.status]}</td></tr>`).join('')}</tbody></table></div>` : empty('No access history for this user yet.')}`;
+    }
+    return `<div class="page-head"><h1>Access requests</h1><span class="muted">Request → legal check (NDA/CDA or uncleared data) → data-owner approval → access</span><span class="spacer"></span>${u.role === 'admin' ? `<button class="btn btn-sm" id="exp-audit">${ic('download')} Export audit trail (CSV)</button>` : ''}</div>
+      <div class="tabs" id="req-tabs" style="margin-top:16px">${isApprover ? `<button data-reqtab="inbox" class="${UI.reqTab === 'inbox' ? 'active' : ''}">${ic('shield')} Approvals inbox <span class="pill ${inbox.length ? 'gold' : ''}">${inbox.length}</span></button>` : ''}<button data-reqtab="mine" class="${UI.reqTab === 'mine' ? 'active' : ''}">${ic('send')} My requests <span class="pill">${mine.length}</span></button><button data-reqtab="history" class="${UI.reqTab === 'history' ? 'active' : ''}">${ic('clock')} History</button>${u.role === 'admin' ? `<button data-reqtab="all" class="${UI.reqTab === 'all' ? 'active' : ''}">${ic('list')} All requests <span class="pill">${all.length}</span></button>` : ''}</div>
+      <div id="req-list">${body}</div>`;
   }
 
   // ---------- ask ----------
@@ -608,7 +663,7 @@
         <div class="card pad"><h3>${ic('upload')} Import / extend concepts</h3><p class="small muted">Upload a JSON array of concepts <code>{id,label,cat,alt[],def,broader,related[],query}</code>. Imported concepts become active in search & Ask immediately.</p>
         <input type="file" id="ont-import" accept=".json,application/json" class="input" ${ST.role === 'admin' ? '' : 'disabled'}>${ST.role === 'admin' ? '' : '<p class="xs muted">Only Administrators can import concepts.</p>'}${ST.concepts.length ? `<p class="small">${ST.concepts.length} imported concept(s) active.</p>` : ''}</div></div>`;
     }
-    return `<div class="row"><h1 style="font-size:1.8rem">Ontology</h1><span class="muted">The controlled vocabulary behind search, autocomplete and Ask – built for pharmaceutical materials science & 3D printing</span></div><div style="margin-top:14px">${tabs}${body}</div>`;
+    return `<div class="page-head"><h1>Ontology</h1><span class="muted">The controlled vocabulary behind search, autocomplete and Ask – built for pharmaceutical materials science & 3D printing</span></div><div style="margin-top:14px">${tabs}${body}</div>`;
   }
   function exportOntology(fmt) {
     const C = O.concepts;
@@ -630,7 +685,7 @@
     const bySrc = per('source');
     const roles = [['Search & see dataset exists', '✓', '✓', '✓', 'open data only'], ['See full metadata of own / project data', '✓', '✓', '✓', '–'], ['See composition of NDA/CDA data', 'after approval', 'own projects', '✓', '–'], ['Open data location', 'after approval', 'own projects', '✓', 'open & cleared'], ['Request access', '✓', '✓', '–', '✓'], ['Approve data-owner step', 'own datasets', '✓', '✓', '–'], ['Confirm legal clearance', '–', '–', '✓ (data steward / legal)', '–'], ['Import datasets & concepts, re-index', '–', '–', '✓', '–']];
     const schema = [['id / pid', 'Internal ID and persistent identifier'], ['name', 'Dataset name following convention PROJECT_FORMULATION_TECHNIQUE_YYYYMMDD_Rn'], ['title / description', 'Human-readable title and description'], ['technique / process', 'Measurement technique (controlled list) and manufacturing process'], ['project / formulation', 'Project ID and formulation/sample-set code'], ['components', 'API / excipient composition with function and w/w %'], ['mix / form', 'Formulation type (Solo API, API + excipient, …) and sample form'], ['equipment', 'Equipment IDs (inventory-linked)'], ['owner / creator', 'Accountable data owner and creating scientist'], ['created / modified', 'ISO dates harvested from the file system / ELN'], ['source / domain / path', 'Server source, AD domain and UNC/URL location'], ['params / summary', 'Method parameters and result summary (metadata, not data)'], ['cls / legal / agreement', 'Classification, legal clearance status, NDA/CDA reference & conditions'], ['tags', 'Max. 3 controlled tags (amorphous, printable, brittle filament, …)'], ['fair', 'Automated FAIR maturity score (F/A/I/R)']];
-    return `<div class="row"><h1 style="font-size:1.8rem">Index & sources</h1><span class="muted">Crawled server landscape, schema and permission model</span><span class="spacer"></span>${admin ? '' : `<span class="pill warn">${ic('lock')} Admin actions require the Administrator role</span>`}</div>
+    return `<div class="page-head"><h1>Index & sources</h1><span class="muted">Crawled server landscape, schema and permission model</span><span class="spacer"></span>${admin ? '' : `<span class="pill warn">${ic('lock')} Admin actions require the Administrator role</span>`}</div>
       <div class="stats" style="grid-template-columns:repeat(5,1fr)">${[[D.DATASETS.length.toLocaleString('en'), 'Datasets in index'], [D.DATASETS.reduce((s, d) => s + d.files, 0).toLocaleString('en'), 'Files referenced'], [(D.DATASETS.reduce((s, d) => s + d.sizeMB, 0) / 1024).toFixed(1) + ' GB', 'Data volume referenced'], [Object.keys(per('domain')).length, 'AD / server domains'], [ST.imported.length, 'Imported records']].map(([v, l]) => `<div class="card stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('')}</div>
       <div class="section-title"><h2>Crawled sources</h2><span class="spacer"></span><button class="btn btn-primary btn-sm" id="crawl" ${admin ? '' : 'disabled'}>${ic('refresh')} Run incremental crawl</button></div>
       <div class="card" style="overflow:auto" id="sources-table"><table class="tbl"><thead><tr><th>Source</th><th>Domain</th><th>Type</th><th>Root</th><th>Datasets</th><th>Last crawl</th><th>Status</th></tr></thead><tbody>${D.SOURCES.map((s) => `<tr><td><b>${esc(s.name)}</b><div class="xs muted mono">${esc(s.host)}</div></td><td>${esc(s.domain)}</td><td>${esc(s.type)}</td><td class="mono xs">${esc(s.root)}</td><td>${bySrc[s.id] || (s.id === 'S6' ? 'links' : 0)}</td><td class="crawl-t">${esc(s.crawl)}</td><td><span class="pill ${s.status === 'OK' ? 'ok' : 'warn'}">${esc(s.status)}</span><div class="progress" style="margin-top:6px" hidden><i></i></div></td></tr>`).join('')}</tbody></table></div>
@@ -659,6 +714,7 @@
     const f = $('#eq-filter', app); if (f) f.addEventListener('input', () => { const q = X.norm(f.value); $$('.eq-wrap', app).forEach((w) => { w.hidden = q && !w.dataset.txt.includes(q); }); });
     const s = $('#sort', app); if (s) { s.value = UI.sort; s.addEventListener('change', () => { UI.sort = s.value; render(); }); }
     const oq = $('#ont-q', app); if (oq) { oq.addEventListener('input', () => { UI.ontQ = oq.value; const pos = oq.selectionStart; render(); const n = $('#ont-q'); n.focus(); n.setSelectionRange(pos, pos); }); }
+    const hu = $('#hist-user', app); if (hu) hu.addEventListener('change', () => { UI.histUser = hu.value; render(); });
     const oc = $('#ont-cat', app); if (oc) oc.addEventListener('change', () => { UI.ontCat = oc.value; render(); });
     const ai = $('#ask-input', app); if (ai) ai.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askNow(ai.value); } });
     const fi = $('#ds-import', app); if (fi) fi.addEventListener('change', () => readJSON(fi.files[0], importDatasets));
@@ -668,7 +724,7 @@
   function askNow(q) { UI.askQ = q.trim(); go(`#/ask?q=${enc(UI.askQ)}`); }
 
   document.addEventListener('click', (e) => {
-    const el = e.target.closest('[data-q],[data-run],[data-facet],[data-unfilter],[data-entity],[data-view],[data-page],[data-dstab],[data-req],[data-decide],[data-reqtab],[data-onttab],[data-concept],[data-ontexp],[data-ask],[data-copy],[data-role],button[id]');
+    const el = e.target.closest('[data-q],[data-run],[data-facet],[data-unfilter],[data-entity],[data-view],[data-page],[data-dstab],[data-req],[data-decide],[data-reqtab],[data-reqfilter],[data-onttab],[data-concept],[data-ontexp],[data-ask],[data-copy],[data-role],button[id]');
     if (!el) { if (!e.target.closest('#role-switch')) $('#role-menu').classList.remove('open'); return; }
     const ds = el.dataset;
     if (ds.q !== undefined) return runSearch(ds.q, {});
@@ -679,9 +735,10 @@
     if (ds.view) { UI.view = ds.view; return render(); }
     if (ds.page) { UI.page = +ds.page; render(); return window.scrollTo({ top: 0 }); }
     if (ds.dstab) { UI.dsTab = ds.dstab; return render(); }
-    if (ds.req) return openRequestModal(ds.req);
+    if (ds.req) { e.preventDefault(); return openRequestModal(ds.req); }
     if (ds.decide) { const c = $('#cm-' + ds.decide); return decide(ds.decide, ds.ok === '1', c ? c.value.trim() : ''); }
-    if (ds.reqtab) { UI.reqTab = ds.reqtab; return render(); }
+    if (ds.reqtab) { UI.reqTab = ds.reqtab; UI.reqFilter = 'all'; return render(); }
+    if (ds.reqfilter) { UI.reqFilter = ds.reqfilter; return render(); }
     if (ds.onttab) { UI.ontTab = ds.onttab; return render(); }
     if (ds.concept) { UI.concept = ds.concept; return go(`#/ontology/${ds.concept}`); }
     if (ds.ontexp) return exportOntology(ds.ontexp);
@@ -690,7 +747,7 @@
     if (ds.role) return setRole(ds.role);
     switch (el.id) {
       case 'role-btn': { const m = $('#role-menu'); m.classList.toggle('open'); $('#role-btn').setAttribute('aria-expanded', m.classList.contains('open')); return; }
-      case 'btn-theme': { const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); ST.theme = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = ST.theme; save(); return; }
+      case 'btn-theme': { ST.theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = ST.theme; save(); updateChrome(); return; }
       case 'clear-filters': return runSearch(UI.q, {});
       case 'exp-csv': return download(`fair-librarian-results-${TODAY}.csv`, toCSV(exportRows(lastResults), Object.keys(exportRows([{ d: D.DATASETS[0] }])[0])), 'text/csv');
       case 'exp-json': return download(`fair-librarian-results-${TODAY}.json`, JSON.stringify({ query: UI.q, filters: UI.filters, exported: TODAY, role: ST.role, results: exportRows(lastResults) }, null, 2));
@@ -700,6 +757,7 @@
       case 'req-access': return openRequestModal(el.dataset.id);
       case 'ask-go': return askNow($('#ask-input').value);
       case 'exp-audit': return download(`access-audit-${TODAY}.csv`, toCSV(ST.requests.flatMap((r) => r.history.map((h) => ({ request: r.id, dataset: r.ds, requester: person(r.requester).name, status: r.status, date: h.t, actor: h.who === 'system' ? 'System' : person(h.who).name, action: h.action, comment: h.comment || '' }))), ['request', 'dataset', 'requester', 'status', 'date', 'actor', 'action', 'comment']), 'text/csv');
+      case 'exp-hist': { const uid = el.dataset.uid; return download(`access-history-${person(uid).surname || uid}-${TODAY}.csv`, toCSV(userHistory(uid).map((x) => ({ date: x.date, request: x.request, dataset: x.ds.name, role: x.as, event: x.event, by: x.actor, comment: x.comment, outcome: x.status })), ['date', 'request', 'dataset', 'role', 'event', 'by', 'comment', 'outcome']), 'text/csv'); }
       case 'exp-index-json': return download(`fair-librarian-index-${TODAY}.json`, JSON.stringify(D.DATASETS.filter(visibleToGuest).map((d) => hasAccess(d) ? d : { id: d.id, name: d.name, technique: d.technique, project: d.project, owner: d.owner, created: d.created, modified: d.modified, cls: d.cls, legal: d.legal, restricted: true }), null, 1));
       case 'exp-index-csv': return download(`fair-librarian-index-${TODAY}.csv`, toCSV(exportRows(D.DATASETS.filter(visibleToGuest).map((d) => ({ d }))), Object.keys(exportRows([{ d: D.DATASETS[0] }])[0])), 'text/csv');
       case 'exp-ont': return exportOntology('json');
@@ -725,7 +783,7 @@
   document.addEventListener('keydown', (e) => { if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) { const q = $('#q'); if (q) { e.preventDefault(); q.focus(); } } if (e.key === 'Escape') { closeModal(); $('#role-menu').classList.remove('open'); } });
 
   // ---------- boot ----------
-  if (ST.theme) document.documentElement.dataset.theme = ST.theme;
+  document.documentElement.dataset.theme = ST.theme || 'dark';
   if (!ST.requests) { ST.requests = seedRequests(); save(); }
   applyImports();
   hydrateIcons(document);

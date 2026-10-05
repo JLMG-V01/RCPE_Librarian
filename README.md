@@ -23,7 +23,7 @@ It's a static site with no build step. Use either option:
 | **Projects** | Team, equipment used, and a formulation table that links the full process chain |
 | **Dataset page** | All metadata except the data itself (overview, composition, parameters, provenance, storage, legal, FAIR score, relationship graph), shown **only to roles with access** |
 | **Legal clearance** | NDA/CDA/consortium status, agreement reference and conditions on every dataset. Confidential compositions are masked |
-| **Access workflow** | Request → legal check (automatic for cleared data) → data-owner approval → access granted (time-limited), with an approvals inbox and an audit-trail export |
+| **Access workflow** | Request → legal check (automatic for cleared data) → data-owner approval → access granted (time-limited). Rejections require a reason. Includes an approvals inbox, "My requests" with status filters (open / approved / rejected / expired) and a per-user **History** tab (admins can view any user) with CSV export and an audit-trail export |
 | **Roles** | Scientist, Data Owner, Administrator and Guest, switchable in the top bar |
 | **Ask the Librarian** | Turns a plain-language question (EN/DE) into the exact search query, explains each term, relaxes the query when nothing matches all aspects, and suggests alternative words |
 | **Ontology** | 150+ concepts, 650+ synonyms, broader/narrower/related relations. Export as JSON, CSV, SKOS/Turtle or search-engine synonyms; import new concepts (admin) |
@@ -34,7 +34,7 @@ It's a static site with no build step. Use either option:
 
 ```
 index.html
-assets/css/app.css        design system (light/dark, responsive)
+assets/css/app.css        design system – RCPE corporate palette, Montserrat, dark mode by default (light mode via toggle)
 assets/js/ontology.js     domain ontology (reusable in the real project)
 assets/js/data.js         entities and the seeded generator (~1,200 datasets)
 assets/js/search.js       index, query parser, ontology expansion, facets, autocomplete, Ask
