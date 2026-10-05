@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The FAIR Librarian · RCPE</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Pilot: index-based search across scattered research data of the RCPE server landscape – pharmaceutical materials science & 3D printing." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b2545'/%3E%3Cpath d='M8 9h6v14H8zM15 9h4v14h-4z' fill='%23e9c46a'/%3E%3Ccircle cx='22' cy='19' r='4' fill='none' stroke='%232ec4b6' stroke-width='2'/%3E%3Cpath d='M25 22l3 3' stroke='%232ec4b6' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+<body>
+  <div class="demo-banner" role="note"><b>Pilot demo</b> · All people, projects, partners, agreements, server names and datasets shown are <b>fictional</b>. No real research data or infrastructure details are included.</div>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="#/" id="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="currentColor"/><path d="M8 9h6v14H8zM15 9h4v14h-4z" fill="#e9c46a"/><circle cx="22" cy="19" r="4" fill="none" stroke="#2ec4b6" stroke-width="2"/><path d="M25 22l3 3" stroke="#2ec4b6" stroke-width="2"/></svg>
+      </span>
+      <span class="brand-text"><b>The FAIR Librarian</b><small>RCPE Research Data Index · Pilot</small></span>
+    </a>
+    <nav class="mainnav" id="mainnav">
+      <a href="#/" data-nav="search">Search</a>
+      <a href="#/ask" data-nav="ask">Ask</a>
+      <a href="#/equipment" data-nav="equipment">Equipment</a>
+      <a href="#/projects" data-nav="projects">Projects</a>
+      <a href="#/ontology" data-nav="ontology">Ontology</a>
+      <a href="#/requests" data-nav="requests">Requests <span class="badge-count" id="req-badge" hidden>0</span></a>
+      <a href="#/index" data-nav="index">Index</a>
+    </nav>
+    <div class="top-actions">
+      <button class="btn btn-tour" id="btn-tour" title="Start the guided demo tour"><span data-icon="play"></span><span class="hide-sm hide-md">Demo tour</span></button>
+      <button class="icon-btn" id="btn-theme" title="Toggle dark mode"><span data-icon="moon"></span></button>
+      <div class="role-switch" id="role-switch">
+        <button class="role-btn" id="role-btn" aria-haspopup="true" aria-expanded="false"></button>
+        <div class="role-menu" id="role-menu" role="menu"></div>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <footer class="footer">
+    <span>The FAIR Librarian · Pilot vision for the RCPE research data landscape</span>
+    <span>Demo data are fictional · Metadata only – no research data are stored in this index</span>
+  </footer>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+
+  <script src="assets/js/ontology.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/search.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/tour.js"></script>
+</body>
+</html>
