@@ -32,7 +32,7 @@ proc.sls|Selective laser sintering|PROC|SLS;laser sintering;laser sintered;sinte
 proc.hme|Hot-melt extrusion|PROC|HME;melt extrusion;Schmelzextrusion;twin-screw extrusion;TSE;extrusion|Continuous thermal processing of API/polymer blends in a twin-screw extruder to produce extrudates or filaments.||form.filament,form.asd,param.barrel,param.screw|process:HME
 proc.filprod|Filament production|PROC|filament manufacturing;filament extrusion;filament spooling;Filamentherstellung;winding|HME step producing diameter-controlled filament (1.75 / 2.85 mm) for FDM printing.|proc.hme|form.filament,prop.diameter,tech.filqc|technique:HME technique:FIL-QC
 proc.slicing|Print design & slicing|PROC|slicing;slicer;G-code;gcode;STL;CAD model;print file;digital design|Generation of the 3D model (STL) and machine instructions (G-code) defining geometry and infill.|proc.am|param.infill,param.layer|technique:DESIGN
-proc.blend|Physical mixing|PROC|blending;mixing;physical mixture preparation;Turbula;Mischen|Preparation of powder blends prior to extrusion or printing.||form.pm|form:"physical mixture"
+proc.blend|Physical mixing|PROC|blending;mixing;physical mixture preparation;Mischen|Preparation of powder blends prior to extrusion or printing.||form.pm|form:"physical mixture"
 proc.stab|Stability study|PROC|storage stability;ICH stability;stress test;accelerated stability;40/75;25/60;Stabilitätsstudie;aging|Storage of samples under ICH climate conditions with time-point analytics.||prop.physstab,tech.climate|technique:STAB
 proc.pat|Process analytical technology|PROC|PAT;in-line monitoring;inline monitoring;real-time monitoring;online analytics;Prozessanalytik|In-line/on-line measurement of CQAs during HME or printing.||tech.inraman,tech.nir|process:PAT
 form.printlet|Printlet|FORM|printed tablet;3D printed tablet;printed dosage form;3DP tablet;Drucktablette|Tablet-like dosage form manufactured by 3D printing.||proc.am,form.minitab|form:printlet
@@ -75,10 +75,10 @@ exc.pvpva|PVP-VA 64|EXC|copovidone;Kollidon VA64;PVPVA;vinylpyrrolidone-vinyl ac
 exc.pvp|PVP K30|EXC|povidone;polyvinylpyrrolidone;Kollidon 30;Povidon|Hydrophilic amorphous polymer; high Tg.|role.carrier||excipient:"PVP K30"
 exc.pva|PVA|EXC|polyvinyl alcohol;PVOH;Parteck MXP;PVA 4-88;Polyvinylalkohol|Semi-crystalline polymer; robust, flexible filaments and immediate release.|role.carrier|prop.printability|excipient:PVA
 exc.peo|PEO|EXC|polyethylene oxide;Polyox;PEO 100k;PEO 600k;polyethylene glycol high MW|Semi-crystalline polymer; low processing temperature, flexible filaments.|role.carrier|exc.peg|excipient:PEO
-exc.soluplus|PVCL-PVAc-PEG graft copolymer|EXC|Soluplus;polyvinyl caprolactam-polyvinyl acetate-polyethylene glycol|Amphiphilic graft copolymer designed for HME solid solutions.|role.carrier|form.asd|excipient:Soluplus
-exc.epo|Eudragit EPO|EXC|basic butylated methacrylate copolymer;amino methacrylate copolymer;EPO;Eudragit E PO|Cationic methacrylate; taste masking, gastric-soluble.|role.carrier|api.pzq|excipient:"Eudragit EPO"
-exc.l100|Eudragit L100|EXC|methacrylic acid copolymer type A;enteric methacrylate;L100|Anionic enteric polymer (dissolves above pH 6).|role.carrier||excipient:"Eudragit L100"
-exc.rlpo|Eudragit RL PO|EXC|ammonio methacrylate copolymer;RL PO;RS PO;sustained release methacrylate|Insoluble, permeable polymer for sustained release.|role.carrier||excipient:"Eudragit RL PO"
+exc.soluplus|PVCL-PVAc-PEG graft copolymer|EXC|Soluplus;polyvinyl caprolactam-polyvinyl acetate-polyethylene glycol|Amphiphilic graft copolymer designed for HME solid solutions.|role.carrier|form.asd|excipient:"PVCL-PVAc-PEG"
+exc.epo|Amino methacrylate copolymer|EXC|basic butylated methacrylate copolymer;Eudragit EPO;EPO;Eudragit E PO|Cationic methacrylate; taste masking, gastric-soluble.|role.carrier|api.pzq|excipient:"Amino methacrylate copolymer"
+exc.l100|Methacrylic acid copolymer|EXC|methacrylic acid copolymer type A;Eudragit L100;enteric methacrylate;L100|Anionic enteric polymer (dissolves above pH 6).|role.carrier||excipient:"Methacrylic acid copolymer"
+exc.rlpo|Ammonio methacrylate copolymer|EXC|Eudragit RL PO;RL PO;RS PO;sustained release methacrylate|Insoluble, permeable polymer for sustained release.|role.carrier||excipient:"Ammonio methacrylate copolymer"
 exc.ec|Ethylcellulose|EXC|EC;ethyl cellulose;Ethocel|Water-insoluble cellulose ether for sustained release.|role.carrier||excipient:Ethylcellulose
 exc.pla|PLA|EXC|polylactic acid;polylactide;PLLA|Biodegradable polyester, reference for printer calibration and implants.|role.carrier||excipient:PLA
 exc.pcl|PCL|EXC|polycaprolactone;Polycaprolacton|Low-melting biodegradable polyester; implants and long-acting systems.|role.carrier||excipient:PCL
@@ -94,7 +94,7 @@ exc.silica|Colloidal silica|EXC|colloidal silicon dioxide;Aerosil;fumed silica;S
 exc.mgst|Magnesium stearate|EXC|MgSt;Mg stearate;Magnesiumstearat|Lubricant reducing friction in extrusion and nozzle.|role.lub||excipient:"Magnesium stearate"
 exc.ccs|Croscarmellose sodium|EXC|CCS;Ac-Di-Sol;crosslinked carboxymethylcellulose|Superdisintegrant for fast-release printlets.|role.disint|tech.disint|excipient:"Croscarmellose sodium"
 exc.gelatin|Gelatin|EXC|Gelatine;gelatin type A;gelatin type B|Gelling agent for SSE formulations (chewables, gummies).|role.carrier|form.gel|excipient:Gelatin
-exc.absorber|Laser absorber|EXC|Candurin;Candurin gold sheen;colorant absorber;pigment absorber|Pigment enabling energy absorption of diode lasers in SLS.|role.filler|proc.sls|excipient:Candurin
+exc.absorber|Laser absorber|EXC|pearlescent pigment;Candurin;Candurin gold sheen;colorant absorber;pigment absorber|Pigment enabling energy absorption of diode lasers in SLS.|role.filler|proc.sls|excipient:"Pearlescent pigment"
 role.carrier|Polymer carrier|ROLE|matrix polymer;carrier;Trägerpolymer;binder polymer|Main matrix-forming polymer of a dispersion or filament.||form.asd|
 role.plast|Plasticizer|ROLE|plasticiser;Weichmacher;plasticizing agent|Additive lowering Tg and melt viscosity, enabling lower processing temperatures and flexible filaments.||prop.tg,prop.brittle|excipient:"Triethyl citrate" excipient:"PEG 4000" excipient:Sorbitol
 role.filler|Filler|ROLE|diluent;Füllstoff;bulking agent|Excipient adding bulk or stiffness.|||excipient:MCC excipient:Mannitol excipient:Talc
@@ -115,12 +115,12 @@ tech.spectro|Vibrational spectroscopy|TECH|spectroscopy;spectra;Spektroskopie|||
 tech.hplc|HPLC|TECH|high-performance liquid chromatography;LC;UPLC;assay;chromatography;HPLC-UV|Quantifies API content and related substances / degradation products.||prop.assay,prop.impur|technique:HPLC
 tech.disso|Dissolution testing|TECH|dissolution;drug release;release testing;USP II;paddle;Freisetzung;Wirkstofffreisetzung;release profile|Measures API release vs. time under compendial conditions.||prop.release|technique:DISSO
 tech.disint|Disintegration testing|TECH|disintegration;Zerfall;Zerfallszeit;disintegration time|Time for a dosage form to break up in medium.||form.odt|technique:DISSO "disintegration"
-tech.txa|Texture analysis|TECH|texture analyzer;3-point bend;three-point bending;mechanical testing;breaking stress;Repka-Zhang test;stiffness test;TA.XT|Mechanical characterization of filaments (flexibility, stiffness) and printlets (hardness).||prop.brittle,prop.stiff,prop.printability|technique:TXA
+tech.txa|Texture analysis|TECH|texture analyzer;3-point bend;three-point bending;mechanical testing;breaking stress;Repka-Zhang test;stiffness test;|Mechanical characterization of filaments (flexibility, stiffness) and printlets (hardness).||prop.brittle,prop.stiff,prop.printability|technique:TXA
 tech.rheo|Rheology|TECH|rheometer;oscillatory rheology;melt rheology;viscosity measurement;Rheologie;complex viscosity|Determines melt/paste viscosity and viscoelasticity relevant for extrusion and printing.||prop.visc|technique:RHEO
 tech.microct|Micro-computed tomography|TECH|micro-CT;µCT;microCT;X-ray tomography;CT scan;Computertomographie|3D imaging of internal structure, porosity and infill accuracy.||prop.porosity,param.infill|technique:MICROCT
 tech.sem|Scanning electron microscopy|TECH|SEM;REM;electron microscopy;Rasterelektronenmikroskop|High-resolution surface and cross-section morphology imaging.||prop.surface|technique:SEM
 tech.dvs|Dynamic vapor sorption|TECH|DVS;sorption isotherm;moisture sorption;water sorption|Moisture uptake vs. relative humidity; hygroscopicity.||prop.hygro|technique:DVS
-tech.psd|Laser diffraction|TECH|PSD;particle size distribution;laser diffraction;Malvern;d50;Partikelgrößenverteilung|Determines particle size distribution of powders.||prop.psd|technique:PSD
+tech.psd|Laser diffraction|TECH|PSD;particle size distribution;laser diffraction;d50;Partikelgrößenverteilung|Determines particle size distribution of powders.||prop.psd|technique:PSD
 tech.hsm|Hot-stage microscopy|TECH|HSM;hot stage;Heiztischmikroskopie;thermomicroscopy|Visual observation of melting, dissolution of API in polymer melt.|tech.thermal|prop.miscib,prop.melt|technique:HSM
 tech.kf|Karl Fischer titration|TECH|KF;Karl-Fischer;water determination;coulometric titration|Determines water content.||prop.water|technique:KF
 tech.pyc|Helium pycnometry|TECH|pycnometer;true density;He pycnometry;Pyknometrie|Determines true density for porosity calculation.||prop.density|technique:PYC
@@ -162,7 +162,7 @@ param.screw|Screw configuration|PARAM|screw speed;screw design;kneading elements
 param.laser|Laser scanning parameters|PARAM|laser power;scan speed;hatch spacing;Laserleistung|Energy input settings in SLS.||proc.sls|technique:SLS-PRINT
 data.nda|Non-disclosure agreement|DATA|NDA;confidentiality agreement;Geheimhaltungsvereinbarung;Vertraulichkeitsvereinbarung;secrecy agreement|Contract restricting disclosure of partner information and derived data.||data.legal,data.cda|class:"Confidential – NDA"
 data.cda|Confidential disclosure agreement|DATA|CDA;confidential disclosure;Vertraulichkeitserklärung|Agreement governing exchange of confidential materials or data, typically before collaboration.||data.legal,data.nda|class:"Confidential – CDA"
-data.ca|Consortium agreement|DATA|CA;grant agreement;consortium;Konsortialvertrag|Agreement governing data rights within funded consortia (e.g., EU, COMET).||data.legal|legal:"Cleared with conditions"
+data.ca|Consortium agreement|DATA|CA;grant agreement;consortium;Konsortialvertrag|Agreement governing data rights within funded consortia (e.g., public research programmes).||data.legal|legal:"Cleared with conditions"
 data.legal|Legal clearance|DATA|legal review;cleared;freigegeben;legal approval;IP clearance;publishable;can I use;Rechtsfreigabe;clearance|Confirmation by Legal & Contracts that data may be used/shared under stated conditions.||data.nda,data.cda,data.embargo|legal:Cleared
 data.embargo|Embargo|DATA|publication embargo;Sperrfrist;blocked until|Time-limited restriction on publication or sharing.||data.legal|legal:"Cleared with conditions"
 data.class|Data classification|DATA|classification;confidentiality level;Vertraulichkeitsstufe;sensitivity|Confidentiality level controlling who may see metadata and access data.||data.nda|
@@ -183,7 +183,7 @@ data.lims|LIMS|DATA|laboratory information management system;sample management;s
     'Where can I find DSC data of itraconazole amorphous solid dispersions?',
     'Do we have dissolution profiles of paracetamol printlets?',
     'Show me Raman maps of polypills with metformin',
-    'What was printed on the Prusa printer in 2025?',
+    'What was printed on the Fabrikam printer in 2025?',
     'Which pure APIs have XRPD reference patterns?',
     'Is there legally cleared data on pediatric minitablets I can publish?',
     'Melt viscosity of PEO formulations for semi-solid or FDM printing',

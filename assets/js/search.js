@@ -15,10 +15,10 @@
   const STOP = new Set('a an the of for and or to in on with by at from is are was were be been do does did can could i we you me my our show find where which what who whom whose when how any all some there here data dataset datasets have has had about please give list get need looking look want would like this that these those it its than then too very into using use used were der die das und oder mit von für fur ist sind gibt es wo welche welcher wie im in ein eine zu den dem des nach auf'.split(' '));
 
   const FIELD_ALIASES = { exc: 'excipient', polymer: 'excipient', mat: 'material', tech: 'technique', eq: 'equipment', proj: 'project', type: 'mix', cls: 'class', fmt: 'format' };
-  const FIELDS = ['api', 'excipient', 'material', 'technique', 'process', 'equipment', 'project', 'owner', 'creator', 'person', 'mix', 'form', 'legal', 'class', 'domain', 'format', 'tag', 'after', 'before', 'modified-after', 'modified-before', 'id'];
+  const FIELDS = ['api', 'excipient', 'material', 'technique', 'process', 'equipment', 'project', 'owner', 'creator', 'person', 'mix', 'form', 'legal', 'class', 'domain', 'format', 'tag', 'after', 'before', 'modified-after', 'modified-before', 'id', 'access'];
 
   // equipment colloquial aliases (brand / slang → equipment id)
-  const EQ_ALIASES = { prusa: 'EQ-FDM-01', mk4: 'EQ-FDM-01', ultimaker: 'EQ-FDM-02', 'dual nozzle': 'EQ-FDM-02', 'dual extrusion': 'EQ-FDM-02', 'pharma printer': 'EQ-FDM-03', 'gmp printer': 'EQ-FDM-03', 'sls printer': 'EQ-SLS-01', 'laser printer': 'EQ-SLS-01', 'sse printer': 'EQ-SSE-01', 'dpe printer': 'EQ-DPE-01', 'powder printer': 'EQ-DPE-01', '11 mm extruder': 'EQ-HME-11', 'small extruder': 'EQ-HME-11', '16 mm extruder': 'EQ-HME-16', 'pilot extruder': 'EQ-HME-16', 'laser gauge': 'EQ-FWD-01', 'winder': 'EQ-FWD-01', 'texture analyzer': 'EQ-TXA-01', 'climate chamber': 'EQ-STB-01' };
+  const EQ_ALIASES = { fabrikam: 'EQ-FDM-01', 'fx-400': 'EQ-FDM-01', contoso: 'EQ-FDM-02', 'dx-5': 'EQ-FDM-02', 'dual nozzle': 'EQ-FDM-02', 'dual extrusion': 'EQ-FDM-02', 'pharma printer': 'EQ-FDM-03', 'gmp printer': 'EQ-FDM-03', 'sls printer': 'EQ-SLS-01', 'laser printer': 'EQ-SLS-01', 'sse printer': 'EQ-SSE-01', 'dpe printer': 'EQ-DPE-01', 'powder printer': 'EQ-DPE-01', '11 mm extruder': 'EQ-HME-11', 'small extruder': 'EQ-HME-11', '16 mm extruder': 'EQ-HME-16', 'pilot extruder': 'EQ-HME-16', 'laser gauge': 'EQ-FWD-01', 'winder': 'EQ-FWD-01', 'texture analyzer': 'EQ-TXA-01', 'climate chamber': 'EQ-STB-01' };
 
   // ---------- ontology lexicon ----------
   const LEX = []; // {phrase, concept}
@@ -40,7 +40,7 @@
       const ppl = [D.PEOPLE_BY[d.owner], D.PEOPLE_BY[d.creator]].filter(Boolean).map((p) => p.name).join(' ');
       const conceptText = conceptLabelsFor(d).join(' ');
       const pub = {
-        name: norm(d.name), title: norm(d.sensitive ? d.techName + ' ' + d.formulation : d.title),
+        name: norm(d.name), title: norm(`${d.techName} ${d.formulation}`),
         tech: norm(`${d.technique} ${d.techName} ${d.process} ${d.form}`),
         eq: norm(eqs.map((e) => `${e.id} ${e.name} ${e.model}`).join(' ')),
         proj: norm(`${prj.id} ${prj.name} ${prj.title}`), ppl: norm(ppl),
@@ -61,17 +61,20 @@
   // ---------- access ----------
   function canAccess(user, d, grants) {
     if (!user) return false;
+    if (d.public) return true; // released as open data – accessible to everyone incl. third parties
     if (user.role === 'admin') return true;
     if (grants && grants.has(user.id + '|' + d.id)) return true;
     const p = D.PRJ_BY[d.project];
     const openCleared = d.cls === 'Open (internal)' && (d.legal === 'Cleared' || d.legal === 'Not required');
-    if (user.role === 'guest') return openCleared;
+    if (user.role === 'guest') return false; // external guests: only public or explicitly approved data
     if (d.owner === user.id) return true;
     if (p && p.members.includes(user.id) && d.legal !== 'Not cleared') return true;
     if (p && p.owner === user.id) return true;
     return openCleared;
   }
-  function canSeeDetails(user, d, grants) { return !d.sensitive || canAccess(user, d, grants); }
+  // composition/description visible: always with access; internal staff also see non-confidential compositions (discovery);
+  // external guests never see compositions or formulations without approved access
+  function canSeeDetails(user, d, grants) { if (canAccess(user, d, grants)) return true; if (!user || user.role === 'guest') return false; return !d.sensitive; }
 
   // ---------- query parsing ----------
   function parseQuery(q) {
@@ -144,6 +147,7 @@
         case 'before': return d.created <= v;
         case 'modified-after': return d.modified >= v;
         case 'modified-before': return d.modified <= v;
+        case 'access': return nv === 'public' ? !!d.public : nv === 'mine' ? canAccess({ id: ctx.userId, role: ctx.role }, d, ctx.grants) : true;
         case 'id': return norm(d.id) === nv || norm(d.name) === nv;
         default: return true;
       }
@@ -176,7 +180,7 @@
         const d = doc.d;
         const details = canSeeDetails(user, d, grants);
         if (user && user.role === 'guest' && d.cls.startsWith('Confidential')) continue; // guests don't see confidential entries at all
-        const ctx = { details, userId: user && user.id };
+        const ctx = { details, userId: user && user.id, role: user && user.role, grants };
         if (!Object.entries(fields).every(([f, vals]) => fieldMatch(d, f, vals, ctx))) continue;
         const h = details ? doc.full : doc.pub;
         let score = 0, hits = 0;

@@ -8,7 +8,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const enc = encodeURIComponent;
   const fmtDate = (s) => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '–';
-  const TODAY = '2026-10-05';
+  const TODAY = '2026-10-06';
 
   // ---------- icons ----------
   const ICONS = {
@@ -28,7 +28,7 @@
     refresh: '<path d="M20 11a8 8 0 0 0-14.9-4M4 4v4h4M4 13a8 8 0 0 0 14.9 4M20 20v-4h-4"/>', arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>',
     send: '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>', chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>', layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
     printer: '<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/>', tag: '<path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
-    beaker: '<path d="M5 3h14M6 3v15a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V3M6 12h12"/>', thermo: '<path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/>', drop: '<path d="M12 3s7 7.5 7 12a7 7 0 0 1-14 0c0-4.5 7-12 7-12z"/>', box: '<path d="m12 3 9 4.5v9L12 21l-9-4.5v-9z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>'
+    beaker: '<path d="M5 3h14M6 3v15a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V3M6 12h12"/>', thermo: '<path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/>', drop: '<path d="M12 3s7 7.5 7 12a7 7 0 0 1-14 0c0-4.5 7-12 7-12z"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>', file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>', box: '<path d="m12 3 9 4.5v9L12 21l-9-4.5v-9z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>'
   };
   const ic = (n) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
   const hydrateIcons = (root = document) => $$('[data-icon]', root).forEach((el) => { el.innerHTML = ic(el.dataset.icon); });
@@ -37,16 +37,17 @@
   const tv = (t) => TV[t] || [String(t || 'DAT').slice(0, 3).toUpperCase(), '#64748b'];
 
   // ---------- persistent state ----------
-  const LS = 'fairlib.state.v2';
+  const LS = 'fairlib.state.v3';
   const loadState = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
   let ST = loadState() || {};
   ST.role = ST.role || 'scientist';
   ST.requests = ST.requests || null;
   ST.imported = ST.imported || [];
   ST.concepts = ST.concepts || [];
+  ST.releaseLog = ST.releaseLog || [];
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(ST)); } catch (e) { /* storage unavailable */ } };
 
-  const UI = { q: '', filters: {}, sort: 'relevance', view: 'list', page: 1, showFilters: false, entity: 'datasets', reqTab: null, ontTab: 'dictionary', concept: 'tech.dsc', ontCat: '', ontQ: '', dsTab: 'overview', askQ: '' };
+  const UI = { mode: 'search', browseTab: 'projects', openTab: 'catalog', openSel: new Set(), openQ: '', q: '', filters: {}, sort: 'relevance', view: 'list', page: 1, showFilters: false, entity: 'datasets', reqTab: null, ontTab: 'dictionary', concept: 'tech.dsc', ontCat: '', ontQ: '', dsTab: 'overview', askQ: '' };
 
   const person = (id) => D.PEOPLE_BY[id] || { name: id, initials: '?', color: '#64748b', surname: id };
   const user = () => { const r = D.ROLES[ST.role]; return { ...person(r.user), role: ST.role, roleLabel: r.label }; };
@@ -55,6 +56,17 @@
   const hasAccess = (d) => X.canAccess(user(), d, grants());
   const seeDetails = (d) => X.canSeeDetails(user(), d, grants());
   const visibleToGuest = (d) => !(ST.role === 'guest' && d.cls.startsWith('Confidential'));
+  // open data: projects without NDA/CDA, legally cleared, released by the data owner
+  const eligible = (d) => { const p = D.PRJ_BY[d.project]; return !!p && !p.agreement && !d.cls.startsWith('Confidential') && (d.legal === 'Cleared' || d.legal === 'Not required'); };
+  const canRelease = (d) => ST.role === 'admin' || (ST.role !== 'guest' && d.owner === user().id);
+  function seedReleases() {
+    const rel = {};
+    const add = (d, by) => { rel[d.id] = { license: 'CC BY 4.0', date: d.modified < '2026-09-20' ? new Date(Date.parse(d.modified) + 9 * 86400000).toISOString().slice(0, 10) : '2026-09-28', by: by || d.owner, doi: `10.5072/fairlib.${d.id.toLowerCase()}` }; };
+    D.DATASETS.filter((d) => eligible(d) && d.tags.includes('published')).forEach((d) => add(d));
+    D.DATASETS.filter((d) => eligible(d) && d.project === 'MATLIB' && d.mix === 'Solo API' && ['XRPD', 'DSC', 'FTIR'].includes(d.technique)).slice(0, 24).forEach((d) => add(d, 'p06'));
+    return rel;
+  }
+  function applyReleases() { D.DATASETS.forEach((d) => { d.public = (ST.releases && ST.releases[d.id]) || null; }); }
   const legalOk = (d) => d.legal === 'Cleared' || d.legal === 'Not required';
 
   // ---------- seed demo requests ----------
@@ -70,7 +82,7 @@
     const list = [];
     if (a) list.push({ id: 'R-1001', ds: a.id, requester: 'p01', purpose: 'Comparison / benchmark', reason: 'Benchmark of HPMCAS ASD crystallinity against PrintPed minitablet formulations.', duration: '90', created: '2026-09-28', status: 'owner', history: [H('2026-09-28', 'p01', 'Request submitted'), H('2026-09-28', 'system', 'Legal check passed automatically (dataset cleared)')] });
     if (b) list.push({ id: 'R-1002', ds: b.id, requester: 'g01', purpose: 'Joint publication', reason: 'Visiting researcher – comparison with university dissolution set-up.', duration: '30', created: '2026-09-30', status: 'owner', history: [H('2026-09-30', 'g01', 'Request submitted'), H('2026-09-30', 'system', 'Legal check passed automatically (dataset cleared)')] });
-    if (c) list.push({ id: 'R-0998', ds: c.id, requester: 'p01', purpose: 'Reuse for new study', reason: 'Extrusion window of Soluplus systems for PrintPed.', duration: '180', created: '2026-08-12', status: 'rejected', history: [H('2026-08-12', 'p01', 'Request submitted'), H('2026-08-14', 'p03', 'Legal check rejected', 'CDA-2025-003: partner-owned results, reuse outside contract scope not permitted.')] });
+    if (c) list.push({ id: 'R-0998', ds: c.id, requester: 'p01', purpose: 'Reuse for new study', reason: 'Extrusion window of PVCL-PVAc-PEG systems for PrintPed.', duration: '180', created: '2026-08-12', status: 'rejected', history: [H('2026-08-12', 'p01', 'Request submitted'), H('2026-08-14', 'p03', 'Legal check rejected', 'CDA-2025-003: partner-owned results, reuse outside contract scope not permitted.')] });
     if (e) list.push({ id: 'R-0995', ds: e.id, requester: 'p01', purpose: 'Reuse for new study', reason: 'Raman PLS model transfer to pharma FDM system.', duration: '180', created: '2026-07-02', status: 'granted', expires: '2026-12-29', history: [H('2026-07-02', 'p01', 'Request submitted'), H('2026-07-04', 'p03', 'Legal clearance confirmed', 'Internal use only per CDA-2024-014 §4.2'), H('2026-07-07', 'p02', 'Approved by data owner', 'Granted for 180 days.')] });
     if (f) list.push({ id: 'R-1003', ds: f.id, requester: 'p04', purpose: 'Joint publication', reason: 'Joint paper with consortium WP3 on swallowability.', duration: '90', created: '2026-10-01', status: 'legal', history: [H('2026-10-01', 'p04', 'Request submitted'), H('2026-10-01', 'system', 'Routed to Legal & Contracts (dataset under legal review)')] });
     if (g) list.push({ id: 'R-1004', ds: g.id, requester: 'p09', purpose: 'Reuse for new study', reason: 'Reference XRPD patterns for DPE amorphization study.', duration: '90', created: '2026-10-02', status: 'owner', history: [H('2026-10-02', 'p09', 'Request submitted'), H('2026-10-02', 'system', 'Legal check passed automatically (dataset cleared)')] });
@@ -127,13 +139,13 @@
 
   const legalPill = (l) => { const m = { Cleared: ['ok', 'check', 'Legally cleared'], 'Not required': ['info', 'check', 'No restriction'], 'Cleared with conditions': ['gold', 'scale', 'Cleared w/ conditions'], 'Under legal review': ['warn', 'clock', 'Under legal review'], 'Not cleared': ['bad', 'x', 'Not cleared'] }[l] || ['', 'info', l]; return `<span class="pill ${m[0]}" title="Legal status: ${esc(l)}">${ic(m[1])}${m[2]}</span>`; };
   const clsPill = (c) => `<span class="pill ${c.startsWith('Confidential') ? 'bad' : c === 'Open (internal)' ? 'info' : ''}" title="Data classification">${ic(c.startsWith('Confidential') ? 'shield' : 'layers')}${esc(c)}</span>`;
-  const accessPill = (d) => hasAccess(d) ? `<span class="pill ok">${ic('unlock')}Access</span>` : `<span class="pill warn">${ic('lock')}Restricted</span>`;
+  const accessPill = (d) => d.public ? `<span class="pill ok" title="Released as open data">${ic('globe')}Open data</span>` : hasAccess(d) ? `<span class="pill" title="You have access">${ic('unlock')}Access</span>` : `<span class="pill warn" title="Request access to see details and location">${ic('lock')}Restricted</span>`;
   const personLink = (id) => { const p = person(id); return `<a href="#/search?q=${enc('person:' + p.surname)}" title="${esc(p.title || '')}">${esc(p.name)}</a>`; };
   const avatar = (id, sm) => { const p = person(id); return `<span class="avatar ${sm ? 'sm' : ''}" title="${esc(p.name)}">${esc(p.initials)}</span>`; };
   const eqLink = (id) => D.EQ_BY[id] ? `<a href="#/equipment/${id}">${esc(D.EQ_BY[id].name)}</a>` : esc(id);
   const prjLink = (id) => D.PRJ_BY[id] ? `<a href="#/project/${id}">${esc(D.PRJ_BY[id].name)}</a>` : esc(id);
   const tagBtn = (t) => `<button class="tag" data-q="tag:&quot;${esc(t)}&quot;">${esc(t)}</button>`;
-  const dsTitle = (d) => seeDetails(d) ? d.title : `${d.techName} – ${d.formulation} (confidential composition)`;
+  const dsTitle = (d) => seeDetails(d) ? d.title : `${d.techName} · ${d.formulation}`;
   const ticon = (t) => `<div class="ticon" title="${esc(t)}">${tv(t)[0]}</div>`;
 
   // ---------- routing ----------
@@ -155,18 +167,19 @@
       setActiveNav('search');
       app.innerHTML = (UI.q || Object.keys(UI.filters).length) ? pageResults() : pageHome();
     } else if (r === 'dataset') { setActiveNav('search'); if (UI.lastDs !== parts[1] && !window.__tourActive) UI.dsTab = 'overview'; UI.lastDs = parts[1]; app.innerHTML = pageDataset(parts[1]); }
-    else if (r === 'equipment') { setActiveNav('equipment'); app.innerHTML = parts[1] ? pageEquipment(parts[1]) : pageEquipmentList(); }
-    else if (r === 'projects' || r === 'project') { setActiveNav('projects'); app.innerHTML = parts[1] ? pageProject(parts[1]) : pageProjectList(); }
-    else if (r === 'ask') { setActiveNav('ask'); if (params.get('q')) UI.askQ = params.get('q'); app.innerHTML = pageAsk(); }
+    else if (r === 'browse') { setActiveNav('browse'); if (parts[1]) UI.browseTab = parts[1]; app.innerHTML = pageBrowse(); }
+    else if (r === 'equipment') { setActiveNav('browse'); if (!parts[1]) { UI.browseTab = 'equipment'; app.innerHTML = pageBrowse(); } else app.innerHTML = pageEquipment(parts[1]); }
+    else if (r === 'projects' || r === 'project') { setActiveNav('browse'); if (!parts[1]) { UI.browseTab = 'projects'; app.innerHTML = pageBrowse(); } else app.innerHTML = pageProject(parts[1]); }
+    else if (r === 'ask') { setActiveNav('search'); if (params.get('q')) UI.askQ = params.get('q'); app.innerHTML = pageAsk(); }
     else if (r === 'ontology') { setActiveNav('ontology'); if (parts[1]) { UI.concept = parts[1]; UI.ontTab = 'dictionary'; } app.innerHTML = pageOntology(); }
+    else if (r === 'open') { setActiveNav('open'); app.innerHTML = parts[1] ? pageOpenLanding(parts[1]) : pageOpen(); }
     else if (r === 'requests') { setActiveNav('requests'); app.innerHTML = pageRequests(); }
-    else if (r === 'index') { setActiveNav('index'); app.innerHTML = pageIndex(); }
+    else if (r === 'index' || r === 'admin') { setActiveNav('admin'); app.innerHTML = ST.role === 'admin' ? pageIndex() : `<div class="card empty"><h2>Administration</h2><p>This area is available to the <b>Administrator</b> role only.</p><button class="btn btn-primary" data-role="admin">Switch to Administrator</button></div>`; }
     else app.innerHTML = `<div class="empty card"><h2>Page not found</h2><p><a href="#/">Back to search</a></p></div>`;
     bindPage(app);
     updateChrome();
     if (!window.__tourActive) window.scrollTo({ top: 0 });
   }
-
   // ---------- chrome: role switcher, badge, theme ----------
   function updateChrome() {
     const u = user();
@@ -175,22 +188,24 @@
     const n = actionable().length;
     const b = $('#req-badge'); b.hidden = !n; b.textContent = n;
     const dark = document.documentElement.dataset.theme !== 'light'; $('#btn-theme').innerHTML = ic(dark ? 'sun' : 'moon'); $('#btn-theme').title = dark ? 'Switch to light mode' : 'Switch to dark mode';
-    const idx = $('#mainnav a[data-nav="index"]'); idx.innerHTML = ST.role === 'admin' ? 'Index & Admin' : 'Index';
+    $('#mainnav a[data-nav="admin"]').hidden = ST.role !== 'admin';
   }
   function setRole(role, quiet) { ST.role = role; save(); $('#role-menu').classList.remove('open'); render(); if (!quiet) toast(`Now viewing as <b>${D.ROLES[role].label}</b> – ${esc(person(D.ROLES[role].user).name)}`, D.ROLES[role].icon === 'flask' ? 'flask' : D.ROLES[role].icon); }
 
   // ---------- search box ----------
   function searchBox(compact) {
     const nf = Object.values(UI.filters).reduce((s, v) => s + (v && v.length ? 1 : 0), 0);
+    const ask = UI.mode === 'ask' && !compact;
     return `<div class="searchbox ${compact ? 'compact' : ''}" id="searchbox">
-      <div class="sb-inner">${ic('search')}
-        <input class="sb-input" id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search equipment, datasets, APIs, polymers, projects, people…  e.g. itraconazole DSC" value="${esc(UI.q)}" aria-label="Search the index" />
-        <button class="btn" id="btn-filters" title="Add filters">${ic('filter')}Filters${nf ? ` <span class="pill info">${nf}</span>` : ''}</button>
-        <button class="btn btn-primary" id="btn-search">${ic('search')}<span class="hide-sm">Search</span></button>
+      ${compact ? '' : `<div class="mode-toggle" id="mode-toggle" role="tablist"><button data-mode="search" class="${ask ? '' : 'on'}">${ic('search')} Search the index</button><button data-mode="ask" class="${ask ? 'on' : ''}">${ic('chat')} Ask a question</button></div>`}
+      <div class="sb-inner">${ic(ask ? 'chat' : 'search')}
+        <input class="sb-input" id="q" type="search" autocomplete="off" spellcheck="false" placeholder="${ask ? 'Ask in plain language – e.g. Which HPMCAS filaments were too brittle to print?' : 'Search datasets, equipment, materials, projects or people'}" value="${esc(ask ? '' : UI.q)}" aria-label="${ask ? 'Ask a question' : 'Search the index'}" data-askmode="${ask ? 1 : 0}" />
+        ${ask ? '' : `<button class="btn btn-ghost" id="btn-filters" title="Add filters">${ic('filter')}<span class="hide-sm">Filters</span>${nf ? ` <span class="pill gold">${nf}</span>` : ''}</button>`}
+        <button class="btn btn-primary" id="btn-search">${ask ? 'Ask' : 'Search'}</button>
       </div>
       <div class="ac" id="ac" hidden></div>
     </div>
-    <div id="filter-panel-wrap">${UI.showFilters ? filterPanel() : ''}</div>`;
+    <div id="filter-panel-wrap">${UI.showFilters && !ask ? filterPanel() : ''}</div>`;
   }
   function filterPanel() {
     const f = UI.filters; const v = (k) => (f[k] && f[k][0]) || '';
@@ -221,6 +236,11 @@
   function bindSearchBox(root) {
     const inp = $('#q', root); if (!inp) return;
     const ac = $('#ac', root); let items = [], sel = -1;
+    if (inp.dataset.askmode === '1') {
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (inp.value.trim()) askNow(inp.value); } });
+      $('#btn-search', root).addEventListener('click', () => { if (inp.value.trim()) askNow(inp.value); });
+      return;
+    }
     const ORDER = ['concept', 'dataset', 'equipment', 'project', 'material', 'person'];
     const LABEL = { concept: 'Ontology concepts – search expands to synonyms', dataset: 'Datasets', equipment: 'Equipment', project: 'Projects', material: 'Materials', person: 'People' };
     const ICN = { concept: 'book', dataset: 'db', equipment: 'cpu', project: 'project', material: 'beaker', person: 'user' };
@@ -253,7 +273,7 @@
     inp.addEventListener('blur', () => setTimeout(() => { ac.hidden = true; }, 180));
     ac.addEventListener('mousedown', (e) => { const el = e.target.closest('.ac-item'); if (el) { e.preventDefault(); choose(items[+el.dataset.i]); } });
     $('#btn-search', root).addEventListener('click', () => runSearch(inp.value.trim()));
-    $('#btn-filters', root).addEventListener('click', () => { UI.showFilters = !UI.showFilters; $('#filter-panel-wrap', root).innerHTML = UI.showFilters ? filterPanel() : ''; bindFilterPanel(root); });
+    $('#btn-filters', root) && $('#btn-filters', root).addEventListener('click', () => { UI.showFilters = !UI.showFilters; $('#filter-panel-wrap', root).innerHTML = UI.showFilters ? filterPanel() : ''; bindFilterPanel(root); });
     bindFilterPanel(root);
   }
   function bindFilterPanel(root) {
@@ -267,29 +287,21 @@
 
   // ---------- HOME ----------
   function pageHome() {
-    const nVisible = D.DATASETS.filter(visibleToGuest).length;
-    const recent = D.DATASETS.filter(visibleToGuest).slice().sort((a, b) => b.modified.localeCompare(a.modified)).slice(0, 6);
-    const browse = [
-      ['FDM printing', 'process:FDM', 'printer', '#d97706'], ['Hot-melt extrusion', 'process:HME', 'thermo', '#2563eb'], ['Semi-solid extrusion', 'process:SSE', 'drop', '#ea580c'],
-      ['Direct powder extrusion', 'process:DPE', 'box', '#c2410c'], ['Laser sintering', 'process:SLS', 'sparkle', '#b45309'], ['Solo API references', 'mix:"Solo API"', 'beaker', '#dc2626'],
-      ['API + excipient', 'mix:"API + excipient"', 'layers', '#7c3aed'], ['Ternary systems', 'mix:"API + polymer + additive"', 'layers', '#6d28d9'], ['Polypills (multi-API)', 'mix:"Multi-API"', 'graph', '#0f766e'], ['Stability studies', 'tag:"stability study"', 'clock', '#92400e']
-    ];
+    const vis = D.DATASETS.filter(visibleToGuest);
+    const nOpen = D.DATASETS.filter((d) => d.public).length;
+    const guest = ST.role === 'guest';
+    const browse = [['FDM printing', 'process:FDM', 'printer'], ['Hot-melt extrusion', 'process:HME', 'thermo'], ['Semi-solid extrusion', 'process:SSE', 'drop'], ['Direct powder extrusion', 'process:DPE', 'box'], ['Laser sintering', 'process:SLS', 'sparkle']];
     return `<section class="hero" id="hero">
       <span class="eyebrow">RCPE Research Data Index</span>
       <h1>The <em>FAIR</em> Librarian</h1>
-      <p class="lead">One search across every project share, instrument storage and collaboration site – findable, accessible, interoperable and reusable research data for pharmaceutical materials science.</p>
+      <p class="lead">${guest ? 'Explore openly released research data from pharmaceutical materials science – and request access to more.' : 'One search across every project share, instrument storage and collaboration site of the research data landscape.'}</p>
       ${searchBox(false)}
-      <div class="hero-links">Not sure what to type? <a href="#/ask">${ic('chat')} Ask the Librarian</a> · <a href="#/ontology">${ic('book')} Browse the ontology</a></div>
+      <div class="stat-line" id="stats"><span><b>${vis.length.toLocaleString('en')}</b> datasets</span><span><b>${D.EQUIPMENT.length}</b> instruments</span><span><b>${D.PROJECTS.filter((p) => !(guest && p.cls.startsWith('Confidential'))).length}</b> projects</span><span><b>${D.SOURCES.length}</b> server sources</span><span><b>${O.concepts.length}</b> ontology concepts</span></div>
     </section>
-    <div class="stats" id="stats">
-      ${[[nVisible.toLocaleString('en'), 'Indexed datasets', 'db'], [D.EQUIPMENT.length, 'Equipment items', 'cpu'], [D.PROJECTS.length, 'Projects', 'project'], [D.SOURCES.length, 'Server sources / domains', 'server'], [O.concepts.length, 'Ontology concepts', 'book'], [O.concepts.reduce((s, c) => s + c.alt.length, 0), 'Synonyms & translations', 'chat']].map(([v, l, i]) => `<div class="card stat"><div class="v">${v}</div><div class="l">${ic(i)} ${l}</div></div>`).join('')}
-    </div>
-    <div class="section-title"><h2>Browse the landscape</h2><span class="muted small">Focus: pharmaceutical 3D printing & materials science</span></div>
-    <div class="browse">${browse.map(([l, q, i, c]) => { const n = X.search(q, { user: user(), grants: grants() }).results.length; return `<a href="${searchHash(q, {})}"><span class="bi">${ic(i)}</span><b>${l}</b><small>${n} datasets</small></a>`; }).join('')}</div>
-    <div class="section-title"><h2>Recently changed</h2><span class="spacer"></span><a href="${searchHash('', { 'modified-after': ['2026-09-01'] })}" class="small">Show all changed since Sept 2026 ${ic('arrow')}</a></div>
-    <div>${recent.map((d) => resultCard({ d, access: hasAccess(d), details: seeDetails(d) })).join('')}</div>`;
+    <div class="section-title"><h2>Explore by process</h2><span class="spacer"></span><a href="#/browse" class="small">All projects & equipment ${ic('arrow')}</a></div>
+    <div class="browse">${browse.map(([l, q, i]) => { const n = X.search(q, { user: user(), grants: grants() }).results.length; return `<a href="${searchHash(q, {})}"><span class="bi">${ic(i)}</span><b>${l}</b><small>${n} datasets</small></a>`; }).join('')}</div>
+    <a class="card open-promo" href="#/open"><span class="bi">${ic('globe')}</span><div><b>Open Data</b><p>${nOpen} datasets from projects without NDA/CDA are released for sharing with third parties – citable, licensed and downloadable.</p></div><span class="spacer"></span>${ic('arrow')}</a>`;
   }
-
   // ---------- RESULTS ----------
   const PAGE = 20;
   let lastResults = [];
@@ -299,69 +311,58 @@
     const F = X.facets(res.results);
     const qn = X.norm(UI.q);
     const eqMatches = qn ? D.EQUIPMENT.filter((e) => X.norm(`${e.id} ${e.name} ${e.model} ${e.category}`).includes(qn) || res.groups.some((g) => g.type === 'term' && X.norm(`${e.name} ${e.model}`).includes(g.text))) : [];
-    const prMatches = qn ? D.PROJECTS.filter((p) => X.norm(`${p.id} ${p.name} ${p.title} ${p.desc}`).includes(qn)) : [];
-    const understood = res.groups.map((g) => g.type === 'concept' ? `<span class="chip" title="${esc(g.concept.def)}"><span class="dot" style="background:${O.CATEGORIES[g.concept.cat].color}"></span><b>${esc(g.concept.label)}</b> <span class="faint xs">${esc(O.CATEGORIES[g.concept.cat].label)}${X.norm(g.concept.label) !== g.text ? ' · from "' + esc(g.text) + '"' : ''}</span> <a href="#/ontology/${g.concept.id}" title="Open in ontology">${ic('book')}</a></span>` : `<span class="chip"><span class="dot" style="background:#94a3b8"></span>"${esc(g.text)}" <span class="faint xs">free text</span></span>`).join('');
-    const fchips = Object.entries(res.fields).flatMap(([k, vals]) => vals.map((v) => `<span class="chip"><span class="faint xs">${esc(k)}:</span> <b>${esc(v)}</b> ${UI.filters[k] && UI.filters[k].includes(v) ? `<button data-unfilter="${esc(k)}" data-val="${esc(v)}" title="Remove filter">×</button>` : ''}</span>`)).join('');
+    const prMatches = qn ? D.PROJECTS.filter((p) => !(ST.role === 'guest' && p.cls.startsWith('Confidential')) && X.norm(`${p.id} ${p.name} ${p.title} ${p.desc}`).includes(qn)) : [];
+    const understood = res.groups.map((g) => g.type === 'concept' ? `<a class="chip" href="#/ontology/${g.concept.id}" title="${esc(g.concept.def)}"><span class="dot" style="background:${O.CATEGORIES[g.concept.cat].color}"></span>${esc(g.concept.label)}<span class="faint xs">${esc(O.CATEGORIES[g.concept.cat].label)}</span></a>` : `<span class="chip">“${esc(g.text)}”<span class="faint xs">text</span></span>`).join('');
+    const fchips = Object.entries(UI.filters).flatMap(([k, vals]) => vals.map((v) => `<span class="chip"><span class="faint xs">${esc(k)}</span><b>${esc(k === 'owner' || k === 'creator' ? (D.PEOPLE_BY[v] ? person(v).name : v) : k === 'project' && D.PRJ_BY[v] ? D.PRJ_BY[v].name : k === 'equipment' && D.EQ_BY[v] ? D.EQ_BY[v].name : v)}</b><button data-unfilter="${esc(k)}" data-val="${esc(v)}" title="Remove filter">×</button></span>`)).join('');
     const pages = Math.max(1, Math.ceil(res.results.length / PAGE));
     UI.page = Math.min(UI.page, pages);
     const slice = res.results.slice((UI.page - 1) * PAGE, UI.page * PAGE);
     const tabs = `<div class="tabs" id="entity-tabs">
-      <button data-entity="datasets" class="${UI.entity === 'datasets' ? 'active' : ''}">${ic('db')} Datasets <span class="pill">${res.results.length}</span></button>
-      <button data-entity="equipment" class="${UI.entity === 'equipment' ? 'active' : ''}">${ic('cpu')} Equipment <span class="pill">${eqMatches.length}</span></button>
-      <button data-entity="projects" class="${UI.entity === 'projects' ? 'active' : ''}">${ic('project')} Projects <span class="pill">${prMatches.length}</span></button></div>`;
+      <button data-entity="datasets" class="${UI.entity === 'datasets' ? 'active' : ''}">Datasets <span class="cnt">${res.results.length}</span></button>
+      ${eqMatches.length ? `<button data-entity="equipment" class="${UI.entity === 'equipment' ? 'active' : ''}">Equipment <span class="cnt">${eqMatches.length}</span></button>` : ''}
+      ${prMatches.length ? `<button data-entity="projects" class="${UI.entity === 'projects' ? 'active' : ''}">Projects <span class="cnt">${prMatches.length}</span></button>` : ''}
+      <span class="spacer"></span>${UI.entity === 'datasets' ? `<select class="input input-sm" id="sort"><option value="relevance">Relevance</option><option value="created">Newest</option><option value="modified">Last changed</option><option value="name">Name A–Z</option></select>
+      <span class="seg" id="viewseg"><button data-view="list" class="${UI.view === 'list' ? 'on' : ''}" title="List">${ic('list')}</button><button data-view="table" class="${UI.view === 'table' ? 'on' : ''}" title="Table">${ic('table')}</button></span>
+      <button class="btn btn-ghost btn-sm" id="exp-csv" title="Export results as CSV">${ic('download')} CSV</button>` : ''}</div>`;
     let main = '';
-    if (UI.entity === 'equipment') main = eqMatches.length ? `<div class="grid g2">${eqMatches.map(eqCard).join('')}</div>` : `<div class="empty card">No equipment matches "${esc(UI.q)}".</div>`;
-    else if (UI.entity === 'projects') main = prMatches.length ? `<div class="grid g2">${prMatches.map(projectCard).join('')}</div>` : `<div class="empty card">No projects match "${esc(UI.q)}".</div>`;
+    if (UI.entity === 'equipment') main = `<div class="grid g2">${eqMatches.map(eqCard).join('')}</div>`;
+    else if (UI.entity === 'projects') main = `<div class="grid g2">${prMatches.map(projectCard).join('')}</div>`;
     else {
-      main = `<div class="toolbar" id="res-toolbar"><span class="count">${res.results.length.toLocaleString('en')} datasets</span>${res.partial ? `<span class="pill warn" title="No dataset matched all terms">${ic('info')}Partial matches</span>` : ''}<span class="spacer"></span>
-        <select class="input" id="sort"><option value="relevance">Sort: relevance</option><option value="created">Newest created</option><option value="modified">Last changed</option><option value="name">Name A–Z</option></select>
-        <span class="seg" id="viewseg"><button data-view="list" class="${UI.view === 'list' ? 'on' : ''}">${ic('list')}List</button><button data-view="table" class="${UI.view === 'table' ? 'on' : ''}">${ic('table')}Table</button></span>
-        <button class="btn btn-sm" id="exp-csv">${ic('download')}CSV</button><button class="btn btn-sm" id="exp-json">${ic('download')}JSON</button></div>`;
+      if (res.partial) main += `<p class="small muted">${ic('info')} No dataset matched every term – showing the closest matches.</p>`;
       if (!res.results.length) main += `<div class="empty card"><h3>No datasets found</h3><p>Try fewer terms, remove filters, or <a href="#/ask?q=${enc(UI.q)}">ask the Librarian</a> to translate your question.</p></div>`;
       else if (UI.view === 'table') main += resultTable(slice);
-      else main += slice.map(resultCard).join('');
-      if (pages > 1) main += `<div class="pager">${UI.page > 1 ? `<button class="btn btn-sm" data-page="${UI.page - 1}">‹ Prev</button>` : ''}<span class="muted small" style="align-self:center">Page ${UI.page} of ${pages}</span>${UI.page < pages ? `<button class="btn btn-sm" data-page="${UI.page + 1}">Next ›</button>` : ''}</div>`;
+      else main += `<div class="res-list">${slice.map(resultCard).join('')}</div>`;
+      if (pages > 1) main += `<div class="pager">${UI.page > 1 ? `<button class="btn btn-sm" data-page="${UI.page - 1}">‹ Previous</button>` : ''}<span class="muted small">Page ${UI.page} of ${pages}</span>${UI.page < pages ? `<button class="btn btn-sm" data-page="${UI.page + 1}">Next ›</button>` : ''}</div>`;
     }
     return `${searchBox(true)}
-      ${(understood || fchips) ? `<div class="understood" id="understood">${ic('sparkle')} <span>Understood as:</span> ${understood} ${fchips}</div>` : ''}
-      <div class="results-layout"><aside class="card facets" id="facets">${facetsHtml(F)}</aside><section id="results">${tabs}${main}</section></div>`;
+      ${(understood || fchips) ? `<div class="understood" id="understood"><span class="xs muted">Understood as</span>${understood}${fchips}</div>` : ''}
+      <div class="results-layout"><aside class="facets" id="facets">${facetsHtml(F)}</aside><section id="results">${tabs}${main}</section></div>`;
   }
   function facetsHtml(F) {
-    const block = (title, key, field, label = (x) => x, limit = 8) => {
+    const block = (title, key, field, label = (x) => x, limit = 6) => {
       const entries = Object.entries(F[key]).sort((a, b) => b[1] - a[1]).slice(0, limit);
       if (!entries.length) return '';
       return `<div class="facet"><h4>${title}</h4>${entries.map(([v, n]) => { const on = (UI.filters[field] || []).includes(v); return `<button class="${on ? 'on' : ''}" data-facet="${field}" data-val="${esc(v)}"><span>${esc(label(v))}</span><span>${n}</span></button>`; }).join('')}</div>`;
     };
-    return `<div class="row"><h3>Refine</h3><span class="spacer"></span>${Object.keys(UI.filters).length ? '<button class="btn btn-sm btn-ghost" id="clear-filters">Clear all</button>' : ''}</div>` +
+    const openOn = (UI.filters.access || []).includes('public');
+    return `<div class="facet-head"><h3>Refine</h3>${Object.keys(UI.filters).length ? '<button class="btn btn-sm btn-ghost" id="clear-filters">Clear</button>' : ''}</div>
+      <label class="switch-row"><input type="checkbox" id="open-only" ${openOn ? 'checked' : ''}><span>Open data only</span></label>` +
       block('Project', 'project', 'project', (v) => D.PRJ_BY[v] ? D.PRJ_BY[v].name : v) +
       block('Technique', 'technique', 'technique', (v) => D.TECH[v] ? D.TECH[v].name : v) +
       block('Formulation type', 'mix', 'mix') +
       block('Legal clearance', 'legal', 'legal') +
-      block('Classification', 'class', 'class') +
-      block('Equipment', 'equipment', 'equipment', (v) => D.EQ_BY[v] ? D.EQ_BY[v].name : v, 6) +
-      block('Owner', 'owner', 'owner', (v) => person(v).name, 6) +
-      block('Server domain', 'domain', 'domain') +
-      block('Tag', 'tag', 'tag');
+      block('Owner', 'owner', 'owner', (v) => person(v).name, 5);
   }
   function resultCard(r) {
     const d = r.d; const det = r.details !== undefined ? r.details : seeDetails(d); const acc = r.access !== undefined ? r.access : hasAccess(d);
-    return `<article class="card res" data-ds="${d.id}">
+    return `<article class="res" data-ds="${d.id}">
       ${ticon(d.technique)}
-      <div style="min-width:0">
-        <h3><a href="#/dataset/${d.id}">${esc(det ? d.title : dsTitle(d))}</a></h3>
-        <div class="nm">${esc(d.name)}</div>
-        <div class="meta">
-          <span>${ic('project')} ${prjLink(d.project)}</span>
-          ${d.equipment.length ? `<span>${ic('cpu')} ${d.equipment.map(eqLink).join(', ')}</span>` : ''}
-          <span>${ic('user')} ${personLink(d.owner)} <span class="faint">(owner)</span></span>
-          <span title="Created / last changed">${ic('clock')} ${fmtDate(d.created)} · changed ${fmtDate(d.modified)}</span>
-          <span>${ic('server')} ${esc(d.domain)}</span>
-        </div>
+      <div class="res-main">
+        <h3><a href="#/dataset/${d.id}" title="${esc(d.name)}">${esc(det ? d.title : dsTitle(d))}</a></h3>
+        <div class="meta"><span>${prjLink(d.project)}</span>${d.equipment.length ? `<span>${eqLink(d.equipment[0])}</span>` : ''}<span>${esc(person(d.owner).name)}</span><span>${fmtDate(d.modified)}</span></div>
         ${det && acc && d.summary ? `<div class="sum">${esc(d.summary)}</div>` : ''}
-        ${!acc ? `<div class="lockline">${ic('lock')} Metadata preview only – data access requires approval.</div>` : ''}
-        ${d.tags.length ? `<div class="row" style="margin-top:6px;gap:6px">${d.tags.map(tagBtn).join('')}</div>` : ''}
       </div>
-      <div class="side">${legalPill(d.legal)}${clsPill(d.cls)}${accessPill(d)}</div>
+      <div class="side">${accessPill(d)}${legalPill(d.legal)}</div>
     </article>`;
   }
   function resultTable(rows) {
@@ -377,14 +378,18 @@
   function eqStats(e) { const ds = D.DATASETS.filter((d) => d.equipment.includes(e.id) && visibleToGuest(d)); return { ds, projects: [...new Set(ds.map((d) => d.project))], sources: [...new Set(ds.map((d) => d.source))] }; }
   function eqCard(e) {
     const s = eqStats(e);
-    return `<div class="card ecard"><div class="row"><span class="eq-ic">${ic('cpu')}</span><div style="flex:1;min-width:0"><h3><a href="#/equipment/${e.id}">${esc(e.name)}</a></h3><div class="xs muted mono">${e.id} · ${esc(e.category)}</div></div><span class="pill ${e.status === 'Operational' ? 'ok' : 'warn'}">${esc(e.status)}</span></div>
+    return `<a class="card ecard" href="#/equipment/${e.id}"><div class="row"><span class="eq-ic">${ic('cpu')}</span><div style="flex:1;min-width:0"><h3>${esc(e.name)}</h3><div class="xs muted">${esc(e.category)} · ${e.id}</div></div>${e.status === 'Operational' ? '' : `<span class="pill warn">${esc(e.status)}</span>`}</div>
       <div class="small muted">${esc(e.model)}</div>
-      <div class="row small"><span><b>${s.ds.length}</b> datasets</span><span><b>${s.projects.length}</b> projects</span><span><b>${s.sources.length}</b> server locations</span><span class="spacer"></span><a href="${searchHash('equipment:' + e.id, {})}">All data ${ic('arrow')}</a></div></div>`;
+      <div class="ecard-foot"><span><b>${s.ds.length}</b> datasets</span><span><b>${s.sources.length}</b> locations</span><span><b>${s.projects.length}</b> projects</span></div></a>`;
   }
-  function pageEquipmentList() {
-    const cats = [...new Set(D.EQUIPMENT.map((e) => e.category))];
-    return `<div class="page-head"><h1>Equipment</h1><span class="muted">${D.EQUIPMENT.length} indexed instruments – every dataset is linked to the equipment that produced it</span><span class="spacer"></span><input class="input" style="max-width:280px" id="eq-filter" placeholder="Filter equipment…"></div>
-      ${cats.map((c) => `<div class="section-title eq-cat"><h2>${esc(c)}</h2></div><div class="grid g3 eq-grid">${D.EQUIPMENT.filter((e) => e.category === c).map((e) => `<div class="eq-wrap" data-txt="${esc(X.norm(e.name + ' ' + e.model + ' ' + e.id))}">${eqCard(e)}</div>`).join('')}</div>`).join('')}`;
+  function pageBrowse() {
+    const t = UI.browseTab === 'equipment' ? 'equipment' : 'projects';
+    const projects = D.PROJECTS.filter((p) => !(ST.role === 'guest' && p.cls.startsWith('Confidential')));
+    const body = t === 'projects'
+      ? `<div class="grid g3">${projects.map((p) => `<div class="eq-wrap" data-txt="${esc(X.norm(p.name + ' ' + p.title + ' ' + p.id))}">${projectCard(p)}</div>`).join('')}</div>`
+      : `<div class="grid g3">${D.EQUIPMENT.map((e) => `<div class="eq-wrap" data-txt="${esc(X.norm(e.name + ' ' + e.model + ' ' + e.id + ' ' + e.category))}">${eqCard(e)}</div>`).join('')}</div>`;
+    return `<div class="page-head"><h1>Browse</h1><span class="muted">Every dataset is linked to the project it belongs to and the instrument that produced it.</span></div>
+      <div class="tabs" id="browse-tabs" style="margin-top:18px"><button data-browse="projects" class="${t === 'projects' ? 'active' : ''}">Projects <span class="cnt">${projects.length}</span></button><button data-browse="equipment" class="${t === 'equipment' ? 'active' : ''}">Equipment <span class="cnt">${D.EQUIPMENT.length}</span></button><span class="spacer"></span><input class="input input-sm" id="eq-filter" style="max-width:240px" placeholder="Filter ${t}…"></div>${body}`;
   }
   function pageEquipment(id) {
     const e = D.EQ_BY[id]; if (!e) return `<div class="empty card">Equipment ${esc(id)} not found.</div>`;
@@ -407,13 +412,9 @@
   // ---------- projects ----------
   function projectCard(p) {
     const n = D.DATASETS.filter((d) => d.project === p.id && visibleToGuest(d)).length;
-    return `<div class="card ecard"><div class="row"><span class="eq-ic">${ic('project')}</span><div style="flex:1;min-width:0"><h3><a href="#/project/${p.id}">${esc(p.name)}</a></h3><div class="xs muted">${esc(p.funding)}</div></div><span class="pill ${p.status === 'Active' ? 'ok' : ''}">${esc(p.status)}</span></div>
-      <div class="small">${esc(p.title)}</div><div class="row">${clsPill(p.cls)}<span class="pill">${n} datasets</span></div>
-      <div class="row small muted"><span>PI ${personLink(p.pi)}</span><span>· Data owner ${personLink(p.owner)}</span></div></div>`;
-  }
-  function pageProjectList() {
-    const vis = D.PROJECTS.filter((p) => !(ST.role === 'guest' && p.cls.startsWith('Confidential')));
-    return `<div class="page-head"><h1>Projects</h1><span class="muted">${vis.length} projects in the index</span></div><div class="grid g3" style="margin-top:16px">${vis.map(projectCard).join('')}</div>`;
+    return `<a class="card ecard" href="#/project/${p.id}"><div class="row"><span class="eq-ic">${ic('project')}</span><div style="flex:1;min-width:0"><h3>${esc(p.name)}</h3><div class="xs muted">${esc(p.funding)}</div></div></div>
+      <div class="small">${esc(p.title)}</div>
+      <div class="ecard-foot"><span><b>${n}</b> datasets</span><span>${esc(p.status)}</span><span>${p.cls.startsWith('Confidential') ? `${ic('shield')} ${esc(p.cls.replace('Confidential – ', ''))}` : esc(p.cls)}</span></div></a>`;
   }
   function pageProject(id) {
     const p = D.PRJ_BY[id]; if (!p) return `<div class="empty card">Project not found.</div>`;
@@ -459,44 +460,45 @@
     if (!d || !visibleToGuest(d)) return `<div class="empty card"><h2>Dataset not available</h2><p>The dataset does not exist or is not visible for your role.</p><a href="#/">Back to search</a></div>`;
     const acc = hasAccess(d), det = seeDetails(d), p = D.PRJ_BY[d.project];
     const req = myRequestFor(d);
-    const reqState = req ? { legal: 'Waiting for legal clearance', owner: 'Waiting for data-owner approval', granted: 'Access granted', rejected: 'Request rejected' }[req.status] : '';
-    const actions = acc
-      ? `<button class="btn btn-primary" id="open-loc" data-path="${esc(d.path)}">${ic('folder')} Open data location</button><button class="btn" data-copy="${esc(d.path)}">${ic('copy')} Copy path</button>`
-      : (req && req.status !== 'rejected' ? `<a class="btn btn-gold" href="#/requests">${ic('clock')} ${reqState}</a>` : `<button class="btn btn-gold" id="req-access" data-id="${d.id}">${ic('key')} Request access</button>${req ? `<span class="xs muted">Previous request rejected</span>` : ''}`);
+    const reqState = req ? { legal: 'Awaiting legal clearance', owner: 'Awaiting data-owner approval', granted: 'Access granted', rejected: 'Request rejected' }[req.status] : '';
+    const pending = req && (req.status === 'legal' || req.status === 'owner');
+    const primary = d.public && ST.role === 'guest' ? `<a class="btn btn-primary" href="#/open/${d.id}">${ic('download')} Open data – download</a>`
+      : acc ? `<button class="btn btn-primary" id="open-loc" data-path="${esc(d.path)}">${ic('folder')} Open data location</button>`
+      : pending ? `<a class="btn" href="#/requests">${ic('clock')} ${reqState}</a>` : `<button class="btn btn-primary" id="req-access" data-id="${d.id}">${ic('key')} Request access</button>`;
+    const releaseBtn = !d.public && eligible(d) && canRelease(d) ? `<button class="btn" data-release="${d.id}">${ic('globe')} Release as open data</button>` : '';
+    const openInfo = d.public ? `<a class="btn btn-ghost btn-sm" href="#/open/${d.id}">${ic('globe')} Public page · ${esc(d.public.license)}</a>` : '';
     const lb = legalOk(d) ? 'ok' : d.legal === 'Not cleared' ? 'bad' : 'warn';
-    const legalBanner = `<div class="legal-banner ${lb}" id="legal-banner">${ic(lb === 'ok' ? 'check' : lb === 'bad' ? 'x' : 'scale')}<div><b>${esc(d.legal)}</b>${d.agreement ? ` · ${esc(d.agreement)}` : ''}<p>${esc(d.legalNote)}</p></div></div>`;
-    const tabs = [['overview', 'Overview', 'info'], ['composition', 'Composition & parameters', 'beaker'], ['provenance', 'Provenance & storage', 'server'], ['legal', 'Legal & access', 'scale'], ['relations', 'Relations', 'graph']];
-    const locked = `<div class="locked" id="locked-panel">${ic('lock')}<div style="flex:1"><h3>Detailed metadata & data location are restricted</h3><p class="small">You can see that this dataset exists and who owns it – details such as ${d.sensitive ? 'composition, ' : ''}process parameters, results summary and storage path are shown once access is approved by the ${legalOk(d) ? 'data owner' : 'legal office and the data owner'}.</p><div class="row">${req && req.status !== 'rejected' ? `<a class="btn btn-sm" href="#/requests">${ic('clock')} ${reqState}</a>` : `<button class="btn btn-gold btn-sm" data-req="${d.id}">${ic('key')} Request access</button>`}</div></div></div>`;
+    const locked = (what) => `<div class="locked" id="locked-panel">${ic('lock')}<div><h3>${what} visible after approval</h3><p class="small muted">${ST.role === 'guest' ? 'As an external guest you see catalogue information only. Compositions, formulations, parameters and storage locations are shared once the data owner approves your request.' : 'Composition details, method parameters, results and the storage location are shown once access is approved by the ' + (legalOk(d) ? 'data owner.' : 'legal office and the data owner.')}</p>${pending ? `<a class="btn btn-sm" href="#/requests">${ic('clock')} ${reqState}</a>` : `<button class="btn btn-primary btn-sm" data-req="${d.id}">${ic('key')} Request access</button>`}</div></div>`;
+    const t = ['overview', 'details', 'relations'].includes(UI.dsTab) ? UI.dsTab : 'overview';
     let body = '';
-    const t = UI.dsTab;
     if (t === 'overview') {
-      body = `<div class="grid g2"><div class="card pad"><h3>Description</h3><p>${det ? esc(d.description) : `<span class="muted">${esc(d.techName)} within project ${esc(p.name)} – composition confidential.</span>`}</p>
-        ${acc && d.summary ? `<h3 style="margin-top:14px">Result summary (metadata)</h3><p>${esc(d.summary)}</p>` : ''}
-        ${d.tags.length ? `<div class="row" style="gap:6px">${d.tags.map(tagBtn).join('')}</div>` : ''}</div>
-        <div class="card pad"><h3>Key facts</h3><dl class="kv" style="margin-top:10px"><dt>Technique</dt><dd><a href="${searchHash('technique:' + d.technique, {})}">${esc(d.techName)}</a></dd><dt>Process</dt><dd>${esc(d.process)}</dd><dt>Project</dt><dd>${prjLink(d.project)}</dd><dt>Formulation</dt><dd class="mono">${esc(d.formulation)}</dd><dt>Formulation type</dt><dd>${esc(d.mix)}</dd><dt>Sample form</dt><dd>${esc(d.form)}</dd><dt>Equipment</dt><dd>${d.equipment.map(eqLink).join(', ') || '–'}</dd><dt>Owner</dt><dd>${personLink(d.owner)}</dd><dt>Creator</dt><dd>${personLink(d.creator)}</dd><dt>Created</dt><dd>${fmtDate(d.created)}</dd><dt>Last changed</dt><dd>${fmtDate(d.modified)}</dd></dl></div></div>
-        <div class="card pad" style="margin-top:16px"><h3>FAIR assessment</h3><div class="fair" style="margin-top:10px">${Object.entries({ F: 'Findable', A: 'Accessible', I: 'Interoperable', R: 'Reusable' }).map(([k, l]) => `<div class="f"><div class="xs muted">${l}</div><b>${d.fair[k]}</b><span class="muted">/100</span><div class="bar"><i style="width:${d.fair[k]}%"></i></div></div>`).join('')}</div></div>`;
-    } else if (t === 'composition') {
-      body = !acc ? locked : `<div class="grid g2"><div class="card pad"><h3>Composition</h3>${d.components.length ? `<table class="tbl" style="margin-top:8px"><thead><tr><th>Component</th><th>Function</th><th>w/w %</th></tr></thead><tbody>${d.components.map((c) => `<tr><td>${D.MAT[c.name] ? `<a href="${searchHash((D.MAT[c.name].kind === 'API' ? 'api:' : 'excipient:') + '"' + c.name + '"', {})}">${esc(c.name)}</a>` : esc(c.name)}</td><td>${esc(c.role)}</td><td>${c.pct}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">–</p>'}</div>
-        <div class="card pad"><h3>Method / process parameters</h3><dl class="kv" style="margin-top:10px">${Object.entries(d.params).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('') || '<dd class="muted">–</dd>'}</dl></div></div>`;
-    } else if (t === 'provenance') {
-      body = !acc ? locked : `<div class="grid g2"><div class="card pad"><h3>Provenance</h3><dl class="kv" style="margin-top:10px"><dt>Persistent ID</dt><dd class="mono">${esc(d.pid)}</dd><dt>Version</dt><dd>${esc(d.version)}</dd><dt>ELN entry</dt><dd class="mono">${esc(d.eln)}</dd><dt>Sample IDs (LIMS)</dt><dd class="mono">${esc(d.samples.join(', '))}</dd><dt>Instrument</dt><dd>${d.equipment.map(eqLink).join(', ') || 'Digital'}</dd><dt>Created by</dt><dd>${personLink(d.creator)} · ${fmtDate(d.created)}</dd><dt>Last changed</dt><dd>${fmtDate(d.modified)}</dd></dl></div>
-        <div class="card pad"><h3>Storage location</h3><dl class="kv" style="margin-top:10px"><dt>Source</dt><dd>${esc(D.SOURCES.find((s) => s.id === d.source).name)}</dd><dt>Domain</dt><dd>${esc(d.domain)}</dd><dt>Files</dt><dd>${d.files} files · ${d.sizeMB} MB</dd><dt>Formats</dt><dd>${d.formats.map((f) => `<span class="pill">.${esc(f)}</span>`).join(' ')}</dd><dt>Checksum</dt><dd class="mono">${esc(d.checksum)}</dd></dl><div class="path" style="margin-top:12px">${ic('folder')} ${esc(d.path)}</div><p class="xs muted">The Librarian indexes metadata only – the data stay at their original location under existing file-system permissions.</p></div></div>`;
-    } else if (t === 'legal') {
-      body = `${legalBanner}<div class="grid g2" style="margin-top:16px"><div class="card pad"><h3>Compliance</h3><dl class="kv" style="margin-top:10px"><dt>Classification</dt><dd>${clsPill(d.cls)}</dd><dt>Legal status</dt><dd>${legalPill(d.legal)}</dd><dt>Agreement</dt><dd>${esc(d.agreement || 'None (no third-party rights)')}</dd><dt>Conditions</dt><dd>${esc(d.legalNote)}</dd><dt>Licence</dt><dd>${esc(d.license)}</dd><dt>Partner</dt><dd>${esc(p.partner)}</dd></dl></div>
-        <div class="card pad"><h3>Your access</h3><p>${acc ? `${ic('unlock')} You have access as <b>${esc(user().roleLabel)}</b>${grants().has(user().id + '|' + d.id) ? ' (approved request)' : ''}.` : `${ic('lock')} No access yet.`}</p>${req ? requestCard(req, true) : ''}${!acc && (!req || req.status === 'rejected') ? `<button class="btn btn-gold" data-req="${d.id}">${ic('key')} Request access</button>` : ''}</div></div>`;
+      const facts = [['Technique', `<a href="${searchHash('technique:' + d.technique, {})}">${esc(d.techName)}</a>`], ['Project', prjLink(d.project)], ['Formulation', det ? `<span class="mono">${esc(d.formulation)}</span> · ${esc(d.mix)}` : `<span class="mono">${esc(d.formulation)}</span>`], ['Equipment', d.equipment.map(eqLink).join(', ') || '–'], ['Owner', personLink(d.owner)], ['Creator', personLink(d.creator)], ['Created', fmtDate(d.created)], ['Last changed', fmtDate(d.modified)]];
+      body = `<div class="ds-grid">
+        <div class="card pad"><h3>About this dataset</h3>
+          ${det ? `<p>${esc(d.description)}</p>` : `<p class="muted">${esc(d.techName)} recorded in project ${esc(p.name)}. Detailed description available after approval.</p>`}
+          ${acc && d.summary ? `<div class="callout"><span class="xs muted">Result summary</span><p>${esc(d.summary)}</p></div>` : ''}
+          <dl class="kv" style="margin-top:16px">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>
+        <div class="card pad" id="access-card"><h3>Access & legal</h3>
+          <div class="legal-banner ${lb}" id="legal-banner">${ic(lb === 'ok' ? 'check' : lb === 'bad' ? 'x' : 'scale')}<div><b>${esc(d.legal)}</b>${d.agreement ? `<p>${esc(d.agreement)}</p>` : ''}<p>${esc(d.legalNote)}</p></div></div>
+          <dl class="kv kv-tight" style="margin-top:14px"><dt>Classification</dt><dd>${esc(d.cls)}</dd><dt>Licence</dt><dd>${d.public ? esc(d.public.license) : esc(d.license)}</dd><dt>Open data</dt><dd>${d.public ? `Released ${fmtDate(d.public.date)} · <a href="#/open/${d.id}">DOI ${esc(d.public.doi)}</a>` : eligible(d) ? 'Eligible – not released' : 'Not eligible (contract or legal restriction)'}</dd><dt>Your access</dt><dd>${acc ? (d.public ? 'Public' : grants().has(user().id + '|' + d.id) ? 'Approved request' : 'Yes – ' + esc(user().roleLabel)) : reqState || 'No access'}</dd></dl>
+          <div class="fair-mini">${Object.entries({ F: 'Findable', A: 'Accessible', I: 'Interoperable', R: 'Reusable' }).map(([k, l]) => `<div title="${l}: ${d.fair[k]}/100"><span>${k}</span><div class="bar"><i style="width:${d.fair[k]}%"></i></div></div>`).join('')}</div></div></div>`;
+    } else if (t === 'details') {
+      body = !acc ? locked('Details are') : `<div class="grid g3">
+        <div class="card pad"><h3>Composition</h3>${d.components.length ? `<table class="tbl" style="margin-top:8px"><thead><tr><th>Component</th><th>Function</th><th>% w/w</th></tr></thead><tbody>${d.components.map((c) => `<tr><td>${D.MAT[c.name] ? `<a href="${searchHash((D.MAT[c.name].kind === 'API' ? 'api:' : 'excipient:') + '"' + c.name + '"', {})}">${esc(c.name)}</a>` : esc(c.name)}</td><td class="muted">${esc(c.role)}</td><td>${c.pct}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">–</p>'}</div>
+        <div class="card pad"><h3>Method parameters</h3><dl class="kv kv-tight" style="margin-top:10px">${Object.entries(d.params).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('') || '<dd class="muted">–</dd>'}</dl></div>
+        <div class="card pad"><h3>Provenance & storage</h3><dl class="kv kv-tight" style="margin-top:10px"><dt>PID</dt><dd class="mono">${esc(d.pid)}</dd><dt>Version</dt><dd>${esc(d.version)}</dd><dt>ELN</dt><dd class="mono">${esc(d.eln)}</dd><dt>Samples</dt><dd class="mono">${esc(d.samples.join(', '))}</dd><dt>Source</dt><dd>${esc(D.SOURCES.find((s) => s.id === d.source).name)}</dd><dt>Files</dt><dd>${d.files} · ${d.sizeMB} MB · ${d.formats.map((f) => '.' + esc(f)).join(' ')}</dd></dl><div class="path" style="margin-top:12px">${esc(d.path)}</div></div></div>`;
     } else {
-      body = `<div class="card pad"><h3>Relationship graph</h3><p class="small muted">Click any node – equipment, project, people and datasets of the same formulation are hyperlinked.</p>${graphSvg(d)}</div>
-        <div class="section-title"><h2>Same formulation – full process chain</h2></div>${(d.related || []).map(dsById).filter(Boolean).filter(visibleToGuest).map((r) => resultCard({ d: r })).join('') || '<div class="empty card">No related datasets.</div>'}`;
+      const rel = (d.related || []).map(dsById).filter(Boolean).filter(visibleToGuest);
+      body = `<div class="card pad"><h3>Relationship graph</h3><p class="small muted">Project, equipment, people and every dataset of the same formulation – all nodes are clickable.</p>${graphSvg(d)}</div>
+        <div class="card" style="margin-top:16px;overflow:auto"><table class="tbl"><thead><tr><th>Process chain of ${esc(d.formulation)}</th><th>Technique</th><th>Created</th><th>Access</th></tr></thead><tbody>${rel.map((r) => `<tr><td><a href="#/dataset/${r.id}">${esc(dsTitle(r))}</a></td><td>${esc(r.technique)}</td><td>${fmtDate(r.created)}</td><td>${accessPill(r)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">No related datasets.</td></tr>'}</tbody></table></div>`;
     }
-    return `<div class="crumbs"><a href="#/">Search</a> › ${prjLink(d.project)} › <span class="mono">${esc(d.formulation)}</span></div>
-      <div class="card ds-head" id="ds-head"><div style="min-width:0"><div class="row">${ticon(d.technique)}${legalPill(d.legal)}${clsPill(d.cls)}${accessPill(d)}${d.imported ? '<span class="pill gold">Imported</span>' : ''}</div>
-        <h1>${esc(dsTitle(d))}</h1><div class="row"><span class="mono small muted">${esc(d.name)}</span><button class="btn btn-sm btn-ghost" data-copy="${esc(d.name)}" title="Copy name">${ic('copy')}</button></div>
-        <div class="row small muted" style="margin-top:6px"><span>${ic('user')} Owner ${personLink(d.owner)}</span><span>${ic('flask')} Creator ${personLink(d.creator)}</span><span>${ic('clock')} Created ${fmtDate(d.created)} · changed ${fmtDate(d.modified)}</span></div></div>
-        <div class="ds-actions" id="ds-actions">${actions}<button class="btn" id="exp-ds" data-id="${d.id}">${ic('download')} Export metadata (JSON)</button><button class="btn btn-ghost btn-sm" data-copy="${esc(d.pid)}">${ic('link')} Copy PID</button></div></div>
-      <div class="tabs" id="ds-tabs" style="margin-top:16px">${tabs.map(([k, l, i]) => `<button data-dstab="${k}" class="${t === k ? 'active' : ''}">${ic(i)}${l}${(!acc && (k === 'composition' || k === 'provenance')) ? ' ' + ic('lock') : ''}</button>`).join('')}</div>
+    return `<div class="crumbs"><a href="#/">Search</a><span>›</span>${prjLink(d.project)}<span>›</span><span class="mono">${esc(d.formulation)}</span></div>
+      <div class="ds-head" id="ds-head"><div style="min-width:0"><div class="row">${ticon(d.technique)}<div style="min-width:0"><h1>${esc(dsTitle(d))}</h1><div class="row xs muted"><span class="mono">${esc(d.name)}</span><button class="btn btn-ghost btn-xs" data-copy="${esc(d.name)}" title="Copy name">${ic('copy')}</button></div></div></div>
+        <div class="row" style="margin-top:12px;gap:6px">${accessPill(d)}${legalPill(d.legal)}${d.imported ? '<span class="pill gold">Imported</span>' : ''}</div></div>
+        <div class="ds-actions" id="ds-actions">${primary}${releaseBtn}${openInfo}<div class="row" style="gap:4px"><button class="btn btn-ghost btn-sm" id="exp-ds" data-id="${d.id}">${ic('download')} Metadata</button><button class="btn btn-ghost btn-sm" data-copy="${esc(location.href.split('#')[0] + '#/dataset/' + d.id)}">${ic('link')} Copy link</button></div></div></div>
+      <div class="tabs" id="ds-tabs">${[['overview', 'Overview'], ['details', 'Details'], ['relations', 'Relations']].map(([k, l]) => `<button data-dstab="${k}" class="${t === k ? 'active' : ''}">${l}${!acc && k === 'details' ? ' ' + ic('lock') : ''}</button>`).join('')}</div>
       <div id="ds-body">${body}</div>`;
   }
-
   // ---------- access request workflow ----------
   function openRequestModal(id) {
     const d = dsById(id); if (!d) return;
@@ -707,6 +709,80 @@
     toast(`${recs.length} dataset(s) imported and indexed`, 'upload');
   }
 
+  // ---------- open data (sharing with third parties) ----------
+  const LICENSES = { 'CC BY 4.0': 'Attribution – reuse with citation', 'CC0 1.0': 'Public domain dedication', 'CC BY-NC 4.0': 'Attribution, non-commercial use only' };
+  const citation = (d) => `${person(d.creator).surname}, ${person(d.creator).name.replace(/^(Dr\.|Ing\.|DI|Mag\.)\s*/, '').split(' ')[0][0]}. (${d.public.date.slice(0, 4)}). ${d.title} [Data set]. RCPE FAIR Librarian (demo). https://doi.org/${d.public.doi}`;
+  function pageOpen() {
+    const pub = D.DATASETS.filter((d) => d.public);
+    const cands = D.DATASETS.filter((d) => !d.public && eligible(d) && canRelease(d));
+    const isCurator = ST.role === 'admin' || ST.role === 'owner' || (ST.role !== 'guest' && cands.length);
+    if (UI.openTab !== 'catalog' && !isCurator) UI.openTab = 'catalog';
+    if (UI.openTab === 'log' && ST.role !== 'admin') UI.openTab = 'catalog';
+    const q = X.norm(UI.openQ);
+    const match = (d) => !q || X.norm(`${d.title} ${d.name} ${d.project} ${d.techName} ${person(d.owner).name}`).includes(q);
+    let body = '';
+    if (UI.openTab === 'catalog') {
+      const list = pub.filter(match).sort((a, b) => b.public.date.localeCompare(a.public.date));
+      body = `<div class="card" style="overflow:auto"><table class="tbl" id="open-catalog"><thead><tr><th>Dataset</th><th>Project</th><th>Licence</th><th>DOI</th><th>Released</th></tr></thead><tbody>${list.map((d) => `<tr><td><a href="#/open/${d.id}">${esc(d.title)}</a><div class="xs muted">${esc(d.techName)}</div></td><td>${esc(D.PRJ_BY[d.project].name)}</td><td><span class="pill ok">${esc(d.public.license)}</span></td><td class="mono xs">${esc(d.public.doi)}</td><td>${fmtDate(d.public.date)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No open datasets match.</td></tr>'}</tbody></table></div>`;
+    } else if (UI.openTab === 'candidates') {
+      const list = cands.filter(match).slice(0, 60);
+      const sel = UI.openSel;
+      body = `<div class="toolbar"><span class="small muted">Eligible: no NDA/CDA on the project, legal status cleared or not required${ST.role === 'admin' ? '' : ', and you are the data owner'}.</span><span class="spacer"></span><button class="btn btn-sm" id="open-selall">${list.length && list.every((d) => sel.has(d.id)) ? 'Clear selection' : 'Select all shown'}</button><button class="btn btn-primary btn-sm" id="open-release-sel" ${sel.size ? '' : 'disabled'}>${ic('globe')} Release selected (${sel.size})</button></div>
+        <div class="card" style="overflow:auto" id="open-candidates"><table class="tbl"><thead><tr><th style="width:36px"></th><th>Dataset</th><th>Project</th><th>Legal</th><th>Owner</th><th></th></tr></thead><tbody>${list.map((d) => `<tr><td><input type="checkbox" data-opensel="${d.id}" ${sel.has(d.id) ? 'checked' : ''}></td><td><a href="#/dataset/${d.id}">${esc(d.title)}</a><div class="xs muted mono">${esc(d.name)}</div></td><td>${esc(D.PRJ_BY[d.project].name)}</td><td>${legalPill(d.legal)}</td><td>${esc(person(d.owner).name)}</td><td><button class="btn btn-sm" data-release="${d.id}">Release</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No eligible datasets.</td></tr>'}</tbody></table></div>${cands.length > 60 ? `<p class="xs muted">Showing 60 of ${cands.length} – use the filter to narrow down.</p>` : ''}`;
+    } else {
+      body = `<div class="card" style="overflow:auto"><table class="tbl"><thead><tr><th>Date</th><th>Action</th><th>By</th><th>Datasets</th><th>Licence</th></tr></thead><tbody>${ST.releaseLog.slice().reverse().map((l) => `<tr><td>${fmtDate(l.t)}</td><td>${esc(l.action)}</td><td>${esc(person(l.who).name)}</td><td class="small">${l.ids.map((i) => `<a href="#/dataset/${i}">${i}</a>`).join(', ')}</td><td>${esc(l.license || '–')}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No releases in this session yet – seeded releases were published before the demo.</td></tr>'}</tbody></table></div>`;
+    }
+    return `<div class="page-head"><h1>Open Data</h1><span class="muted">Share non-confidential research data with third parties – licensed, citable and traceable.</span></div>
+      <div class="steps3" id="open-steps"><div><b>1 · Eligible</b><span>Project without NDA/CDA, dataset legally cleared</span></div><div><b>2 · Released</b><span>Data owner chooses a licence and confirms the checklist</span></div><div><b>3 · Shared</b><span>Public landing page with DOI, citation and download link</span></div></div>
+      <div class="tabs" id="open-tabs"><button data-opentab="catalog" class="${UI.openTab === 'catalog' ? 'active' : ''}">Catalogue <span class="cnt">${pub.length}</span></button>${isCurator ? `<button data-opentab="candidates" class="${UI.openTab === 'candidates' ? 'active' : ''}">Release candidates <span class="cnt">${cands.length}</span></button>` : ''}${ST.role === 'admin' ? `<button data-opentab="log" class="${UI.openTab === 'log' ? 'active' : ''}">Release log</button>` : ''}<span class="spacer"></span><input class="input input-sm" id="open-q" style="max-width:240px" placeholder="Filter…" value="${esc(UI.openQ)}"></div>${body}`;
+  }
+  function pageOpenLanding(id) {
+    const d = dsById(id);
+    if (!d || !d.public) return `<div class="card empty"><h2>Not available as open data</h2><p>This dataset has not been released (or the release was withdrawn).</p><a href="#/open">Browse the open data catalogue</a></div>`;
+    const files = d.formats.flatMap((f, i) => Array.from({ length: Math.min(3, Math.max(1, Math.round(d.files / d.formats.length))) }, (_, k) => `${d.name}${k ? '_' + (k + 1) : ''}.${f}`)).slice(0, 6);
+    const internal = ST.role !== 'guest';
+    const share = location.href.split('#')[0] + '#/open/' + d.id;
+    return `<div class="crumbs"><a href="#/open">Open Data</a><span>›</span><span>${esc(D.PRJ_BY[d.project].name)}</span></div>
+      <article class="landing" id="open-landing">
+        <div class="landing-head"><span class="pill ok">${ic('globe')} Open data · ${esc(d.public.license)}</span><h1>${esc(d.title)}</h1>
+          <p class="muted">${esc(person(d.creator).name)} · ${esc(D.PRJ_BY[d.project].title)} · released ${fmtDate(d.public.date)}</p>
+          <div class="row"><button class="btn btn-primary" data-dl="${d.id}">${ic('download')} Download all (${d.sizeMB} MB)</button><button class="btn" data-copy="${esc(share)}">${ic('share')} Copy share link</button><button class="btn btn-ghost" id="exp-jsonld" data-id="${d.id}">${ic('file')} Metadata (schema.org)</button>${internal ? `<a class="btn btn-ghost" href="#/dataset/${d.id}">View in index</a>` : ''}${canRelease(d) ? `<button class="btn btn-ghost btn-danger" data-withdraw="${d.id}">Withdraw</button>` : ''}</div></div>
+        <div class="ds-grid">
+          <div><div class="card pad"><h3>Description</h3><p>${esc(d.description)}</p>${d.summary ? `<div class="callout"><span class="xs muted">Result summary</span><p>${esc(d.summary)}</p></div>` : ''}</div>
+            <div class="card pad" style="margin-top:16px"><h3>Files</h3><ul class="file-list">${files.map((f) => `<li>${ic('file')}<span class="mono">${esc(f)}</span><button class="btn btn-ghost btn-sm" data-dl="${d.id}">${ic('download')}</button></li>`).join('')}</ul></div></div>
+          <div><div class="card pad"><h3>Cite this dataset</h3><p class="cite">${esc(citation(d))}</p><button class="btn btn-sm" data-copy="${esc(citation(d))}">${ic('copy')} Copy citation</button>
+            <dl class="kv kv-tight" style="margin-top:16px"><dt>DOI</dt><dd class="mono">${esc(d.public.doi)}</dd><dt>Licence</dt><dd>${esc(d.public.license)} – ${esc(LICENSES[d.public.license] || '')}</dd><dt>Technique</dt><dd>${esc(d.techName)}</dd><dt>Composition</dt><dd>${d.components.map((c) => `${esc(c.name)} ${c.pct} %`).join(', ') || '–'}</dd><dt>Created</dt><dd>${fmtDate(d.created)}</dd><dt>Format</dt><dd>${d.formats.map((f) => '.' + esc(f)).join(' ')}</dd></dl></div></div></div>
+        <p class="xs muted" style="margin-top:18px">Demo: the DOI uses the DataCite test prefix 10.5072 and downloads are simulated.</p>
+      </article>`;
+  }
+  function openReleaseModal(ids) {
+    ids = ids.filter((i) => { const d = dsById(i); return d && eligible(d) && canRelease(d) && !d.public; });
+    if (!ids.length) return toast('Nothing eligible to release', 'info');
+    const one = ids.length === 1 ? dsById(ids[0]) : null;
+    modal(`${ic('globe')} Release as open data`, `<p>${one ? `<b>${esc(one.title)}</b><br><span class="xs muted mono">${esc(one.name)}</span>` : `<b>${ids.length} datasets</b> selected`}</p>
+      <ul class="checklist"><li class="ok">${ic('check')} No NDA / CDA on the project</li><li class="ok">${ic('check')} Legal status cleared or not required</li><li class="ok">${ic('check')} You are the data owner${ST.role === 'admin' ? ' (or administrator)' : ''}</li></ul>
+      <div style="margin-top:14px"><label class="fl">Licence</label><select class="input" id="rel-lic">${Object.entries(LICENSES).map(([k, v]) => `<option value="${k}">${k} – ${v}</option>`).join('')}</select></div>
+      <label class="row small" style="margin-top:14px"><input type="checkbox" id="rel-c1"> Contains no personal data and no third-party intellectual property</label>
+      <label class="row small" style="margin-top:6px"><input type="checkbox" id="rel-c2"> Title, description and metadata are suitable for the public</label>
+      <p class="xs muted" style="margin-top:12px">A public landing page with DOI and citation is created. Releases are logged and can be withdrawn.</p>`,
+    `<button class="btn" data-close>Cancel</button><button class="btn btn-primary" id="rel-go">${ic('globe')} Release ${ids.length > 1 ? ids.length + ' datasets' : ''}</button>`);
+    $('#rel-go').addEventListener('click', () => {
+      if (!$('#rel-c1').checked || !$('#rel-c2').checked) return toast('Please confirm both checklist items', 'info');
+      releaseDatasets(ids, $('#rel-lic').value);
+    });
+  }
+  function releaseDatasets(ids, license) {
+    ids.forEach((id) => { ST.releases[id] = { license, date: TODAY, by: user().id, doi: `10.5072/fairlib.${id.toLowerCase()}` }; });
+    ST.releaseLog.push({ t: TODAY, who: user().id, action: 'Released', ids, license });
+    UI.openSel.clear(); applyReleases(); save(); closeModal(); render();
+    toast(`${ids.length} dataset${ids.length > 1 ? 's' : ''} released as open data (${esc(license)})`, 'globe');
+  }
+  function withdrawRelease(id) {
+    if (!confirm('Withdraw this dataset from open data? The public page will no longer be available.')) return;
+    delete ST.releases[id]; ST.releaseLog.push({ t: TODAY, who: user().id, action: 'Withdrawn', ids: [id] });
+    applyReleases(); save(); go('#/dataset/' + id); toast('Release withdrawn', 'x');
+  }
+
   // ---------- page bindings (event delegation) ----------
   function bindPage(app) {
     hydrateIcons(app);
@@ -714,6 +790,9 @@
     const f = $('#eq-filter', app); if (f) f.addEventListener('input', () => { const q = X.norm(f.value); $$('.eq-wrap', app).forEach((w) => { w.hidden = q && !w.dataset.txt.includes(q); }); });
     const s = $('#sort', app); if (s) { s.value = UI.sort; s.addEventListener('change', () => { UI.sort = s.value; render(); }); }
     const oq = $('#ont-q', app); if (oq) { oq.addEventListener('input', () => { UI.ontQ = oq.value; const pos = oq.selectionStart; render(); const n = $('#ont-q'); n.focus(); n.setSelectionRange(pos, pos); }); }
+    const oo = $('#open-only', app); if (oo) oo.addEventListener('change', () => { const nf = { ...UI.filters }; if (oo.checked) nf.access = ['public']; else delete nf.access; runSearch(UI.q, nf); });
+    const opq = $('#open-q', app); if (opq) opq.addEventListener('input', () => { UI.openQ = opq.value; const pos = opq.selectionStart; render(); const n = $('#open-q'); n.focus(); n.setSelectionRange(pos, pos); });
+    $$('[data-opensel]', app).forEach((cb) => cb.addEventListener('change', () => { if (cb.checked) UI.openSel.add(cb.dataset.opensel); else UI.openSel.delete(cb.dataset.opensel); const b = $('#open-release-sel'); b.disabled = !UI.openSel.size; b.innerHTML = `${ic('globe')} Release selected (${UI.openSel.size})`; }));
     const hu = $('#hist-user', app); if (hu) hu.addEventListener('change', () => { UI.histUser = hu.value; render(); });
     const oc = $('#ont-cat', app); if (oc) oc.addEventListener('change', () => { UI.ontCat = oc.value; render(); });
     const ai = $('#ask-input', app); if (ai) ai.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askNow(ai.value); } });
@@ -724,7 +803,7 @@
   function askNow(q) { UI.askQ = q.trim(); go(`#/ask?q=${enc(UI.askQ)}`); }
 
   document.addEventListener('click', (e) => {
-    const el = e.target.closest('[data-q],[data-run],[data-facet],[data-unfilter],[data-entity],[data-view],[data-page],[data-dstab],[data-req],[data-decide],[data-reqtab],[data-reqfilter],[data-onttab],[data-concept],[data-ontexp],[data-ask],[data-copy],[data-role],button[id]');
+    const el = e.target.closest('[data-q],[data-run],[data-facet],[data-unfilter],[data-entity],[data-view],[data-page],[data-dstab],[data-req],[data-decide],[data-reqtab],[data-reqfilter],[data-mode],[data-browse],[data-opentab],[data-release],[data-withdraw],[data-dl],[data-onttab],[data-concept],[data-ontexp],[data-ask],[data-copy],[data-role],button[id]');
     if (!el) { if (!e.target.closest('#role-switch')) $('#role-menu').classList.remove('open'); return; }
     const ds = el.dataset;
     if (ds.q !== undefined) return runSearch(ds.q, {});
@@ -739,6 +818,12 @@
     if (ds.decide) { const c = $('#cm-' + ds.decide); return decide(ds.decide, ds.ok === '1', c ? c.value.trim() : ''); }
     if (ds.reqtab) { UI.reqTab = ds.reqtab; UI.reqFilter = 'all'; return render(); }
     if (ds.reqfilter) { UI.reqFilter = ds.reqfilter; return render(); }
+    if (ds.mode) { UI.mode = ds.mode; render(); const q = $('#q'); if (q) q.focus(); return; }
+    if (ds.browse) { UI.browseTab = ds.browse; return go('#/browse/' + ds.browse); }
+    if (ds.opentab) { UI.openTab = ds.opentab; return render(); }
+    if (ds.release) return openReleaseModal([ds.release]);
+    if (ds.withdraw) return withdrawRelease(ds.withdraw);
+    if (ds.dl) return toast('Download started (simulated in this demo)', 'download');
     if (ds.onttab) { UI.ontTab = ds.onttab; return render(); }
     if (ds.concept) { UI.concept = ds.concept; return go(`#/ontology/${ds.concept}`); }
     if (ds.ontexp) return exportOntology(ds.ontexp);
@@ -766,6 +851,9 @@
       case 'show-imported': e.preventDefault(); return runSearch('Imported');
       case 'reset-demo': if (confirm('Reset demo data (role, requests, imports, concepts)?')) { try { localStorage.removeItem(LS); } catch (er) { /* ignore */ } location.hash = '#/'; location.reload(); } return;
       case 'crawl': return simulateCrawl();
+      case 'open-selall': { const ids = $$('[data-opensel]').map((x) => x.dataset.opensel); const all = ids.every((i) => UI.openSel.has(i)); ids.forEach((i) => (all ? UI.openSel.delete(i) : UI.openSel.add(i))); return render(); }
+      case 'open-release-sel': return openReleaseModal([...UI.openSel]);
+      case 'exp-jsonld': { const d = dsById(el.dataset.id); return download(`${d.name}.jsonld`, JSON.stringify({ '@context': 'https://schema.org/', '@type': 'Dataset', name: d.title, description: d.description, identifier: 'https://doi.org/' + d.public.doi, license: d.public.license, datePublished: d.public.date, dateCreated: d.created, creator: { '@type': 'Person', name: person(d.creator).name }, publisher: { '@type': 'Organization', name: 'RCPE (demo)' }, keywords: [d.techName, d.process, ...d.apis, ...d.excipients], measurementTechnique: d.techName, variableMeasured: Object.keys(d.params), encodingFormat: d.formats }, null, 2), 'application/ld+json'); }
       case 'btn-tour': return window.TOUR && window.TOUR.start();
       default:
     }
@@ -785,6 +873,8 @@
   // ---------- boot ----------
   document.documentElement.dataset.theme = ST.theme || 'dark';
   if (!ST.requests) { ST.requests = seedRequests(); save(); }
+  if (!ST.releases) { ST.releases = seedReleases(); save(); }
+  applyReleases();
   applyImports();
   hydrateIcons(document);
   window.addEventListener('hashchange', render);
@@ -795,6 +885,6 @@
     go, render, setRole, runSearch, openRequestModal, submitRequest, decide, UI, closeModal, dsById, askNow,
     get state() { return ST; }, set state(v) { ST = v; save(); },
     snapshot: () => JSON.stringify(ST), restore: (s) => { ST = JSON.parse(s); save(); render(); },
-    setDsTab: (t) => { UI.dsTab = t; }, setReqTab: (t) => { UI.reqTab = t; }, setOntTab: (t) => { UI.ontTab = t; }, setFilters: (f) => { UI.filters = f; }, setEntity: (x) => { UI.entity = x; }
+    setDsTab: (t) => { UI.dsTab = t; }, openReleaseModal, releaseDatasets, setOpenTab: (t) => { UI.openTab = t; }, setMode: (m) => { UI.mode = m; }, setReqTab: (t) => { UI.reqTab = t; }, setOntTab: (t) => { UI.ontTab = t; }, setFilters: (f) => { UI.filters = f; }, setEntity: (x) => { UI.entity = x; }
   };
 })();
