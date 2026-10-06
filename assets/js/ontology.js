@@ -173,6 +173,12 @@ data.pid|Persistent identifier|DATA|PID;DOI;handle;identifier;persistent ID|Glob
 data.meta|Metadata|DATA|metadata;Metadaten;data description;schema|Structured description of a dataset.|data.fair||
 data.raw|Raw data|DATA|raw;instrument data;Rohdaten;primary data;native format|Unprocessed data as exported by an instrument.||data.processed|format:raw
 data.processed|Processed data|DATA|evaluated;analysed;results;processed;Auswertung;report|Data derived from raw data by evaluation.||data.raw|format:xlsx format:pdf
+data.ehds|European Health Data Space|DATA|EHDS;Europäischer Gesundheitsdatenraum;Regulation 2025/327;HealthData@EU;secondary use;Sekundärnutzung|EU framework (Regulation (EU) 2025/327) for primary and secondary use of electronic health data; secondary use via health data access bodies and HealthData@EU.||data.hdab,data.permit,data.spe,data.healthdcat|
+data.hdab|Health data access body|DATA|HDAB;Gesundheitsdaten-Zugangsstelle;data access body;national contact point;NCP|National body that assesses data access applications and health data requests, issues data permits and provides secure processing environments.|data.ehds|data.permit|
+data.permit|Data permit|DATA|EHDS permit;Datengenehmigung;data access application;health data request|Administrative decision of an HDAB allowing a named user to process specified health data for a stated purpose inside an SPE.|data.ehds|data.hdab,data.spe|
+data.spe|Secure processing environment|DATA|SPE;trusted research environment;TRE;sichere Verarbeitungsumgebung;output checking|Controlled environment in which permitted data are processed; only anonymised results may leave it.|data.ehds|data.permit|
+data.healthdcat|HealthDCAT-AP|DATA|health dataset catalogue;EU dataset catalogue;DCAT-AP;dataset description|Metadata profile used to describe health datasets in national catalogues and the EU dataset catalogue.|data.ehds|data.meta|
+data.realworld|Real-world data|DATA|RWD;real world evidence;RWE;claims data;registry data;EHR data|Health data collected outside controlled trials, e.g. from health records, registries, claims or devices.|data.ehds|form.pedi,form.polypill|
 data.eln|Electronic lab notebook|DATA|ELN;lab notebook;Laborjournal;notebook entry|System documenting experiments; datasets reference ELN entries.|||
 data.lims|LIMS|DATA|laboratory information management system;sample management;sample ID|System tracking samples and analytical requests.|||
 `;

@@ -174,6 +174,7 @@
     else if (r === 'ontology') { setActiveNav('ontology'); if (parts[1]) { UI.concept = parts[1]; UI.ontTab = 'dictionary'; } app.innerHTML = pageOntology(); }
     else if (r === 'open') { setActiveNav('open'); app.innerHTML = parts[1] ? pageOpenLanding(parts[1]) : pageOpen(); }
     else if (r === 'requests') { setActiveNav('requests'); app.innerHTML = pageRequests(); }
+    else if (r === 'ehds') { setActiveNav('ehds'); app.innerHTML = window.EHDS ? window.EHDS.page(parts[1]) : ''; }
     else if (r === 'index' || r === 'admin') { setActiveNav('admin'); app.innerHTML = ST.role === 'admin' ? pageIndex() : `<div class="card empty"><h2>Administration</h2><p>This area is available to the <b>Administrator</b> role only.</p><button class="btn btn-primary" data-role="admin">Switch to Administrator</button></div>`; }
     else app.innerHTML = `<div class="empty card"><h2>Page not found</h2><p><a href="#/">Back to search</a></p></div>`;
     bindPage(app);
@@ -335,6 +336,7 @@
       if (pages > 1) main += `<div class="pager">${UI.page > 1 ? `<button class="btn btn-sm" data-page="${UI.page - 1}">‹ Previous</button>` : ''}<span class="muted small">Page ${UI.page} of ${pages}</span>${UI.page < pages ? `<button class="btn btn-sm" data-page="${UI.page + 1}">Next ›</button>` : ''}</div>`;
     }
     return `${searchBox(true)}
+      ${UI.q && window.EHDS ? window.EHDS.searchCallout(UI.q) : ''}
       ${(understood || fchips) ? `<div class="understood" id="understood"><span class="xs muted">Understood as</span>${understood}${fchips}</div>` : ''}
       <div class="results-layout"><aside class="facets" id="facets">${facetsHtml(F)}</aside><section id="results">${tabs}${main}</section></div>`;
   }
@@ -786,6 +788,7 @@
   // ---------- page bindings (event delegation) ----------
   function bindPage(app) {
     hydrateIcons(app);
+    if (window.EHDS) window.EHDS.bind(app);
     bindSearchBox(app);
     const f = $('#eq-filter', app); if (f) f.addEventListener('input', () => { const q = X.norm(f.value); $$('.eq-wrap', app).forEach((w) => { w.hidden = q && !w.dataset.txt.includes(q); }); });
     const s = $('#sort', app); if (s) { s.value = UI.sort; s.addEventListener('change', () => { UI.sort = s.value; render(); }); }
@@ -883,7 +886,8 @@
   // public API for the demo tour
   window.APP = {
     go, render, setRole, runSearch, openRequestModal, submitRequest, decide, UI, closeModal, dsById, askNow,
-    get state() { return ST; }, set state(v) { ST = v; save(); },
+    get state() { return ST; }, saveState: () => save(),
+    h: { esc, ic, fmtDate, modal, closeModal, toast, download, copy, user, person, personLink, go, render, norm: X.norm, project: (id) => D.PRJ_BY[id], importDatasets }, set state(v) { ST = v; save(); },
     snapshot: () => JSON.stringify(ST), restore: (s) => { ST = JSON.parse(s); save(); render(); },
     setDsTab: (t) => { UI.dsTab = t; }, openReleaseModal, releaseDatasets, setOpenTab: (t) => { UI.openTab = t; }, setMode: (m) => { UI.mode = m; }, setReqTab: (t) => { UI.reqTab = t; }, setOntTab: (t) => { UI.ontTab = t; }, setFilters: (f) => { UI.filters = f; }, setEntity: (x) => { UI.entity = x; }
   };
