@@ -20,7 +20,10 @@
     TECH: { label: 'Analytical Technique', color: '#717171' },
     PROP: { label: 'Material Property / CQA', color: '#E6224F' },
     PARAM: { label: 'Process Parameter', color: '#666CA1' },
-    DATA: { label: 'Data Management & Compliance', color: '#A4A4A4' }
+    DATA: { label: 'Data Management & Compliance', color: '#A4A4A4' },
+    PROD: { label: 'Product', color: '#B31C3F' },
+    XCUT: { label: 'Cross-cutting', color: '#717171' },
+    UNIT: { label: 'Unit of measure (QUDT)', color: '#666CA1' }
   };
 
   const RAW = `
@@ -179,6 +182,35 @@ data.permit|Data permit|DATA|EHDS permit;Datengenehmigung;data access applicatio
 data.spe|Secure processing environment|DATA|SPE;trusted research environment;TRE;sichere Verarbeitungsumgebung;output checking|Controlled environment in which permitted data are processed; only anonymised results may leave it.|data.ehds|data.permit|
 data.healthdcat|HealthDCAT-AP|DATA|health dataset catalogue;EU dataset catalogue;DCAT-AP;dataset description|Metadata profile used to describe health datasets in national catalogues and the EU dataset catalogue.|data.ehds|data.meta|
 data.realworld|Real-world data|DATA|RWD;real world evidence;RWE;claims data;registry data;EHR data|Health data collected outside controlled trials, e.g. from health records, registries, claims or devices.|data.ehds|form.pedi,form.polypill|
+prod.dosage|Dosage form|PROD|Arzneiform;pharmaceutical dosage form;drug product;dosage unit;Darreichungsform|Physical form in which a medicinal product is administered, e.g. printlet, minitablet or gel.||form.printlet,form.minitab,form.polypill|form:printlet
+prod.geometry|Geometry & dose|PROD|geometry;Geometrie;shape;target dose;design dose;Dosis;Geometrie und Dosis;dose individualisation|Designed 3D geometry and target dose of a printed unit – size, shape and infill determine the dose.||proc.slicing,param.infill|technique:DESIGN
+prod.batch|Batch|PROD|Charge;lot;batch number;production batch;print batch|Defined quantity of product manufactured in one run under identical conditions.||prop.mass|technique:FDM-PRINT technique:SSE-PRINT technique:DPE-PRINT technique:SLS-PRINT
+prop.mass|Mass & mass uniformity|PROP|mass;weight;Masse;Gehalt und Masse;mass uniformity;weight variation;Gleichförmigkeit der Masse|Mass of individual units and its variation – a direct indicator of dose accuracy in printing.||prop.assay,prod.geometry|technique:FDM-PRINT
+prop.dim|Dimensions|PROP|dimensions;Dimensionen;size;height;dimensional accuracy;Maßhaltigkeit|Measured size of printed units compared with the design geometry.||prod.geometry,tech.microct|technique:MICROCT
+x.project|Project|XCUT|Projekt;project ID;study;Studie|Organisational context in which data were generated.|||
+x.deviceid|Equipment ID|XCUT|Geräte-ID;device ID;instrument ID;inventory number;asset ID|Unique identifier of the instrument that produced the data – links datasets and equipment.|||
+x.unit|Unit of measure|XCUT|Einheit;Einheiten;unit;units;SI unit|Unit attached to every quantitative value, taken from QUDT.|||
+x.time|Timestamp|XCUT|Zeitstempel;date;created;modified;acquisition time;ISO 8601|Point in time of data creation, acquisition or change.|||
+unit.degc|degree Celsius|UNIT|°C;Grad Celsius;deg C|Temperature unit used for nozzle, bed, barrel and transition temperatures.|x.unit||
+unit.percent|percent|UNIT|%;Prozent;w/w %;% LC|Fraction expressed per hundred – composition, release, porosity, infill.|x.unit||
+unit.mg|milligram|UNIT|mg;Milligramm|Mass unit for doses and unit masses.|x.unit||
+unit.mm|millimetre|UNIT|mm;Millimeter|Length unit for filament diameter, layer height and geometry.|x.unit||
+unit.um|micrometre|UNIT|µm;um;Mikrometer;micron|Length unit for particle size and micro-CT voxels.|x.unit||
+unit.nm|nanometre|UNIT|nm;Nanometer|Wavelength unit for lasers and UV detection.|x.unit||
+unit.min|minute|UNIT|min;Minute|Time unit for print time and dissolution sampling.|x.unit||
+unit.h|hour|UNIT|h;Stunde|Time unit for sustained release.|x.unit||
+unit.mms|millimetre per second|UNIT|mm/s;print speed unit|Speed unit for print-head movement.|x.unit||
+unit.rpm|revolution per minute|UNIT|rpm;U/min;1/min|Rotational speed unit for screws and paddles.|x.unit||
+unit.kgh|kilogram per hour|UNIT|kg/h|Mass flow unit for extruder feed rates.|x.unit||
+unit.bar|bar|UNIT|bar|Pressure unit for die pressure and SSE pneumatics.|x.unit||
+unit.w|watt|UNIT|W;Watt|Power unit for laser power in SLS.|x.unit||
+unit.mpa|megapascal|UNIT|MPa;Megapascal|Stress unit for breaking stress and modulus.|x.unit||
+unit.pas|pascal second|UNIT|Pa·s;Pa s;Pascalsekunde|Dynamic viscosity unit for melts and pastes.|x.unit||
+unit.gcm3|gram per cubic centimetre|UNIT|g/cm³;g/cm3|Density unit for true and bulk density.|x.unit||
+unit.jg|joule per gram|UNIT|J/g|Specific enthalpy unit for DSC melting enthalpy.|x.unit||
+unit.kmin|kelvin per minute|UNIT|K/min|Heating-rate unit in thermal analysis.|x.unit||
+unit.deg|degree (angle)|UNIT|°;2θ;degree 2-theta|Angle unit for XRPD diffraction angles.|x.unit||
+unit.wn|reciprocal centimetre|UNIT|cm⁻¹;cm-1;wavenumber|Wavenumber unit for Raman and FTIR spectra.|x.unit||
 data.eln|Electronic lab notebook|DATA|ELN;lab notebook;Laborjournal;notebook entry|System documenting experiments; datasets reference ELN entries.|||
 data.lims|LIMS|DATA|laboratory information management system;sample management;sample ID|System tracking samples and analytical requests.|||
 `;
@@ -214,5 +246,48 @@ data.lims|LIMS|DATA|laboratory information management system;sample management;s
   // derive narrower relations
   concepts.forEach((c) => { c.narrower = concepts.filter((x) => x.broader === c.id).map((x) => x.id); });
 
-  window.ONTOLOGY = { version: '0.9.0-pilot', namespace: 'https://example.org/fair-librarian/ontology#', CATEGORIES, concepts, byId, QUESTIONS };
+  // ---------- ontology stack (all modules aligned to BFO, ISO/IEC 21838-2) ----------
+  const MODULES = {
+    BFO: { label: 'BFO', full: 'Basic Formal Ontology 2020 (ISO/IEC 21838-2)', role: 'Top-level ontology', ns: 'http://purl.obolibrary.org/obo/BFO_', align: 'Native top level' },
+    PMDco: { label: 'PMDco 3.0', full: 'Platform MaterialDigital core ontology 3.0', role: 'Materials & processes', ns: 'https://w3id.org/pmd/co/', align: 'BFO-based' },
+    AFO: { label: 'Allotrope AFO', full: 'Allotrope Foundation Ontologies', role: 'Analytics & equipment', ns: 'http://purl.allotrope.org/ontologies/', align: 'BFO-based' },
+    ChEBI: { label: 'ChEBI', full: 'Chemical Entities of Biological Interest', role: 'Substances', ns: 'http://purl.obolibrary.org/obo/CHEBI_', align: 'OBO ontology – bridged via alignment axioms' },
+    QUDT: { label: 'QUDT', full: 'Quantities, Units, Dimensions and Types', role: 'Units', ns: 'http://qudt.org/vocab/unit/', align: 'Bridged via alignment axioms (units as information entities)' },
+    FIND: { label: 'FIND', full: 'FIND – own module for pharmaceutical 3D printing', role: 'Domain extension (pharma 3D printing)', ns: 'https://example.org/fair-librarian/find#', align: 'Subclasses of BFO / PMDco / AFO classes' }
+  };
+  const BFO = { material: ['BFO_0000040', 'material entity'], aggregate: ['BFO_0000027', 'object aggregate'], process: ['BFO_0000015', 'process'], quality: ['BFO_0000019', 'quality'], disposition: ['BFO_0000016', 'disposition'], role: ['BFO_0000023', 'role'], gdc: ['BFO_0000031', 'generically dependent continuant'] };
+  const STAGES = { material: 'Material', process: 'Process', product: 'Product', characterization: 'Characterisation', cross: 'Cross-cutting' };
+  // ChEBI IDs verified against ChEBI entry pages; others are left for curation
+  const CHEBI = { 'api.pcm': '46195', 'api.ibu': '5855', 'api.caf': '27732', 'api.theo': '28177', 'api.itz': '6076', 'api.lev': '6437', 'api.hctz': '5778', 'api.nif': '7565', 'api.efv': '119486', 'api.hc': '17650', 'api.met': '6802', 'api.enal': '4785' };
+  const QUDT = { 'unit.degc': 'DEG_C', 'unit.percent': 'PERCENT', 'unit.mg': 'MilliGM', 'unit.mm': 'MilliM', 'unit.um': 'MicroM', 'unit.nm': 'NanoM', 'unit.min': 'MIN', 'unit.h': 'HR', 'unit.mms': 'MilliM-PER-SEC', 'unit.rpm': 'REV-PER-MIN', 'unit.kgh': 'KiloGM-PER-HR', 'unit.bar': 'BAR', 'unit.w': 'W', 'unit.mpa': 'MegaPA', 'unit.pas': 'PA-SEC', 'unit.gcm3': 'GM-PER-CentiM3', 'unit.jg': 'J-PER-GM', 'unit.kmin': 'K-PER-MIN', 'unit.deg': 'DEG', 'unit.wn': 'PER-CentiM' };
+  const FIND_PROC = ['proc.am', 'proc.fdm', 'proc.sse', 'proc.dpe', 'proc.sls', 'proc.filprod', 'proc.slicing'];
+  const PRODUCT_FORMS = ['form.printlet', 'form.minitab', 'form.pedi', 'form.polypill', 'form.odt'];
+  const PMD_MATERIAL_FORMS = ['form.filament', 'form.extrudate', 'form.pm', 'form.gel'];
+  const FIND_PROPS = ['prop.release', 'prop.assay', 'prop.impur', 'prop.homog', 'prop.mass', 'prop.dim', 'prop.printability', 'prop.brittle'];
+  const DISPOSITIONS = ['prop.printability', 'prop.brittle', 'prop.flow', 'prop.hygro', 'prop.physstab', 'prop.miscib'];
+  concepts.forEach((c) => {
+    const k = c.cat, id = c.id;
+    let module = 'FIND', bfo = 'gdc', stage = 'cross';
+    if (k === 'API') { module = 'ChEBI'; bfo = 'material'; stage = 'material'; }
+    else if (k === 'EXC') { module = 'ChEBI'; bfo = 'material'; stage = 'material'; }
+    else if (k === 'ROLE') { module = 'FIND'; bfo = 'role'; stage = 'material'; }
+    else if (k === 'PROC') { module = FIND_PROC.includes(id) ? 'FIND' : 'PMDco'; bfo = 'process'; stage = 'process'; }
+    else if (k === 'PARAM') { module = 'PMDco'; bfo = 'quality'; stage = 'process'; }
+    else if (k === 'FORM') { bfo = 'material'; if (PRODUCT_FORMS.includes(id)) { module = 'FIND'; stage = 'product'; } else if (PMD_MATERIAL_FORMS.includes(id)) { module = 'PMDco'; stage = 'material'; } else { module = 'FIND'; stage = 'material'; } }
+    else if (k === 'PROD') { module = 'FIND'; stage = 'product'; bfo = id === 'prod.geometry' ? 'quality' : id === 'prod.batch' ? 'aggregate' : 'material'; }
+    else if (k === 'TECH') { module = 'AFO'; bfo = 'process'; stage = 'characterization'; }
+    else if (k === 'PROP') { module = FIND_PROPS.includes(id) ? 'FIND' : 'PMDco'; bfo = DISPOSITIONS.includes(id) ? 'disposition' : 'quality'; stage = 'characterization'; }
+    else if (k === 'UNIT') { module = 'QUDT'; bfo = 'gdc'; stage = 'cross'; }
+    else if (k === 'XCUT') { module = id === 'x.unit' ? 'QUDT' : 'FIND'; }
+    if (id === 'tech.climate') stage = 'characterization';
+    c.module = module; c.bfo = bfo; c.stage = stage;
+    c.xrefs = [{ scheme: 'BFO', id: 'BFO:' + BFO[bfo][0].slice(4), label: BFO[bfo][1], rel: 'subClassOf', status: 'verified' }];
+    if (CHEBI[id]) c.xrefs.push({ scheme: 'ChEBI', id: 'CHEBI:' + CHEBI[id], iri: 'http://purl.obolibrary.org/obo/CHEBI_' + CHEBI[id], rel: 'exactMatch', status: 'verified' });
+    else if (k === 'API' || k === 'EXC') c.xrefs.push({ scheme: 'ChEBI', label: c.label, rel: 'exactMatch', status: 'to curate' });
+    if (QUDT[id]) c.xrefs.push({ scheme: 'QUDT', id: 'unit:' + QUDT[id], iri: 'http://qudt.org/vocab/unit/' + QUDT[id], rel: 'exactMatch', status: 'to verify on import' });
+    if (module === 'PMDco' || module === 'AFO') c.xrefs.push({ scheme: module, label: c.label.toLowerCase(), rel: 'closeMatch', status: 'candidate' });
+    if (module === 'FIND' && ['PROC', 'FORM', 'PROD', 'PROP'].includes(k)) c.xrefs.push({ scheme: k === 'PROP' ? 'AFO' : 'PMDco', label: 'parent class to align', rel: 'subClassOf', status: 'candidate' });
+  });
+
+  window.ONTOLOGY = { MODULES, BFO, STAGES, version: '1.0.0-pilot', namespace: 'https://example.org/fair-librarian/find#', CATEGORIES, concepts, byId, QUESTIONS };
 })();
